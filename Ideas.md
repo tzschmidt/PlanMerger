@@ -1,6 +1,6 @@
 ﻿## Ideen für Plan merging
 
-Es gibt zwei arten von Roboter-Roboter Kollisionen:
+Es gibt zwei Arten von Roboter-Roboter Kollisionen:
 1. Mehrere Roboter befinden sich zur selben Zeit an der selben Stelle.
 2. Zwei Roboter gehen ineinander vorbei.
 

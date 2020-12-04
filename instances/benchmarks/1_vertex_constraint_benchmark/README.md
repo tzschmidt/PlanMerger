@@ -8,17 +8,20 @@ With this benchmark we try to tackle the **vertex constraint** problem of our pl
 
 
 
-Image_1 :  Vertex Constraint Conflict
+Image_1 :  Vertex Conflict
 
 ![ Vertex Constraint Problem](vertex_constraint.png "Vertex Constraint Conflict") 
 
 
 
-To invoke this conflict we have created a map in which there are two, equally long, crossing corridors, which each have a robot on one end and a shelve with a product on the other. If both robots would just go straight forward for the selves they would crash in the middle (vertex constraint).
+To invoke this conflict we have created a map in which there are two, equally long, crossing corridors, which each have a robot on one end and a shelve with a product on the other. If both robots would just go straight forward for the selves they would crash in the middle (vertex conflict).
 
 
 
 Image_2: Map View of Benchmark 1
 
-![Map view of Benchmark 1](x5_y5_n9_r2_s2_ps1_pr2_u2_o2_l0_N001.png "Map view of Benchmark 1") 
+![Map view of Benchmark 1](map.png "Map view of Benchmark 1") 
 
+
+
+This Benchmark is split into two separate instances `robot_1_instance/` and `robot_2_instance/` for the Plan-Merging-Project. 

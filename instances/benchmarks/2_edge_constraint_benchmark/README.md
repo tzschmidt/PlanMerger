@@ -4,7 +4,7 @@
 
 ## Description
 
-With this benchmark we try to tackle the **edge constraint** problem of our plan merger. This occurs when two robots are placed side by side to each other at time step $t$ and then try to switch positions at $t+1$ (illustrated in _Image_1_). In a real life scenario this would result in a crash of the two robots. 
+With this benchmark we try to tackle the **edge constraint** problem of our plan merger. This occurs when two robots are placed side by side to each other at time step *t​* and then try to switch positions at *t+1* (illustrated in _Image_1_). In a real life scenario this would result in a crash of the two robots. 
 
 
 

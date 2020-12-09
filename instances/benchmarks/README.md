@@ -17,3 +17,6 @@ For this project in multi agent plan merging we have created several benchmarks 
    + Another Vertex Constraint Benchmark but this time instead of just two Robots, there are multiple
 4. **Edge Constraint Benchmark [Multi Robot]**
    + Another Edge Constraint Benchmark but this time instead of just two Robots, there are multiple
+5. **Conflict through waiting [Multi Robot]**
+   + A Plan Merger that chooses to avoid vertex conflicts through waiting can create new Vertex and Edge Conflicts that weren't there before. This Benchmark deals with this problem.
+

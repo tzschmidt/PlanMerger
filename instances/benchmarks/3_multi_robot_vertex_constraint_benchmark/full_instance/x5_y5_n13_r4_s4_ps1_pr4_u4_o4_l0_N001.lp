@@ -1,6 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% = BENCHMARK 3 = [ EDGE CONSTRAINT - MULTI ROBOT ] ========
+% = BENCHMARK 3 = [ VERTEX CONSTRAINT - MULTI ROBOT ] ======
 %
 % = Instance Statistics ====================================
 % Grid Size X:                      5

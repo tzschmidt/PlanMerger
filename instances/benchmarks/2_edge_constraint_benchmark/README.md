@@ -10,7 +10,7 @@ With this benchmark we try to tackle the **edge constraint** problem of our plan
 
 Image_1 :  Edge Conflict
 
-![ Vertex Constraint Problem](edge_constraint.png "Vertex Constraint Conflict") 
+![ Edge Constraint Problem](edge_constraint.png "Vertex Constraint Conflict") 
 
 
 
@@ -20,7 +20,7 @@ To invoke this conflict we have created a map in which there are two robots plac
 
 Image_2: Map View of Benchmark 2
 
-![Map view of Benchmark 1](map.png "Map view of Benchmark 1") 
+![Map view of Benchmark 1](map.png "Map view of Benchmark 2") 
 
 
 

@@ -10,7 +10,7 @@ This Benchmark tackles again the problem of Edge conflicts. This time instead of
 
 Image_1 : Map View of Benchmark 4
 
-![Map View of Benchmark 3](map.png) 
+![Map View of Benchmark 4](map.png "Map View of Benchmark 4") 
 
 
 

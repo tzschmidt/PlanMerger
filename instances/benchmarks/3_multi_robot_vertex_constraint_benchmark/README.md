@@ -10,7 +10,7 @@ This Benchmark tackles again the problem of Vertex conflicts. This time instead 
 
 Image_1 : Map View of Benchmark 3
 
-![Map View of Benchmark 3](/home/hannes/Programming/PlanMerger/instances/benchmarks/3_multi_robot_vertex_constraint_benchmark/map.png) 
+![Map View of Benchmark 3](map.png "Map View of Benchmark 3]") 
 
 
 

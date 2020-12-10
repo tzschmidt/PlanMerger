@@ -6,27 +6,23 @@ Each Benchmark has a Level assigned to it which indicates the difficulty of the 
 
 ### Benchmark Difficulties :
 
-<div class="difficulty_bar" style="padding:2vw; color:rgba(255,255,255,0.8); background-color:#4CAF50;">Level 1<span style="float:right;"><b>EASY BENCHMARK</b></span></div>
-
-<div class="difficulty_bar" style="padding:2vw; color:rgba(255,255,255,0.8); background-color:#FBC02D";>Level 2<span style="float:right;"><b>MEDIUM BENCHMARK</b></span></div>
-
-<div class="difficulty_bar" style="padding:2vw; color:rgba(255,255,255,0.8); background-color:#F44336";>Level 3<span style="float:right;"><b>HARD BENCHMARK</b></span></div>
+![Difficulties : Easy, Medium, Hard](diffs.png "Difficulties") 
 
 
 
 ## Structure
 
-1. **Vertex Constraint Benchmark <span style="color:#4CAF50">[Level 1]</span>**
+1. **Vertex Constraint Benchmark [Level 1]** - ![#f03c15](https://via.placeholder.com/15/4CAF50/000000?text=+)
    + With this Benchmark we want to test for vertex constraints
    + It consists of two Robots which while having to cross each other have to avoid a vertex conflict (crash)
-2. **Edge Constraint Benchmark <span style="color:#4CAF50">[Level 1]</span>**
+2. **Edge Constraint Benchmark [Level 1]** - ![#f03c15](https://via.placeholder.com/15/4CAF50/000000?text=+)
    + With this Benchmark we want to test for edge constraints
    + It consists of two Robots which are placed side by side and trying to move in the direction of each other
    + They have to avoid an edge conflict (crash)
-3. **Vertex Constraint Benchmark [Multi Robot] <span style="color:#F44336">[Level 3]</span>**
+3. **Vertex Constraint Benchmark [Multi Robot] [Level 3]** - ![#f03c15](https://via.placeholder.com/15/F44336/000000?text=+)
    + Another Vertex Constraint Benchmark but this time instead of just two Robots, there are multiple
-4. **Edge Constraint Benchmark [Multi Robot] <span style="color:#F44336">[Level 3]</span>**
+4. **Edge Constraint Benchmark [Multi Robot] [Level 3]** - ![#f03c15](https://via.placeholder.com/15/F44336/000000?text=+)
    + Another Edge Constraint Benchmark but this time instead of just two Robots, there are multiple
-5. **Conflict through waiting [Multi Robot] <span style="color:#FBC02D">[Level 2]</span>**
+5. **Conflict through waiting [Multi Robot] [Level 2]** - ![#f03c15](https://via.placeholder.com/15/FBC02D/000000?text=+)
    + A Plan Merger that chooses to avoid vertex conflicts through waiting can create new Vertex and Edge Conflicts that weren't there before. This Benchmark deals with this problem.
 

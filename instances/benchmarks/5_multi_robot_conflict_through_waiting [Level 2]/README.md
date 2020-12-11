@@ -8,9 +8,9 @@ In this Benchmark we want to cover the case two vertex conflicts in a row. Robot
 
 
 
-Image_1 : Map View of Benchmark 3
+Image_1 : Map View of Benchmark 5
 
-![Map View of Benchmark 3](map.png)  
+![Map View of Benchmark 5](map.png "Map View of Benchmark 5")  
 
 
 

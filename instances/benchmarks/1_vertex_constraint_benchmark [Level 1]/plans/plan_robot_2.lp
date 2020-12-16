@@ -1,4 +1,4 @@
-occurs(object(robot,2),action(move,(1,0)),1).
-occurs(object(robot,2),action(move,(1,0)),2).
-occurs(object(robot,2),action(move,(1,0)),3).
-occurs(object(robot,2),action(move,(1,0)),4).
+occurs1(object(robot,2),action(move,(1,0)),1).
+occurs1(object(robot,2),action(move,(1,0)),2).
+occurs1(object(robot,2),action(move,(1,0)),3).
+occurs1(object(robot,2),action(move,(1,0)),4).

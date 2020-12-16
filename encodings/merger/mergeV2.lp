@@ -59,7 +59,8 @@ position(R,(X+DX,Y+DY),T,0) :- occurs1(object(robot,R),action(move,(DX,DY)),T), 
 %--------------------------------------------
 % Add a wait statement if two robots are at the same node at the same time
 wait(R1,T,CONFLICT_DEPTH_1) :- position(R1,(X,Y),T,CONFLICT_DEPTH_1), position(R2,(X,Y),T,CONFLICT_DEPTH_2), R1<R2.
-% could't maybe problematic
+% could maybe be problematic
+% possible fix : not position(R,(X,Y),T,CONFLICT_DEPTH_2+1)
 
 % Generate a full new position map with one of the robots waiting before the conflict occurs
 position(R,(X,Y),T,CONFLICT_DEPTH+1) :- position(R,(X,Y),T,CONFLICT_DEPTH), wait(R,T_WAIT,CONFLICT_DEPTH), T<T_WAIT.
@@ -79,6 +80,9 @@ final_position(R,(X,Y),T) :- position(R,(X,Y),T,D), max_conflict_depth(R,D).
 out(R,(X_2-X_1,Y_2-Y_1),T) :- final_position(R,(X_2,Y_2),T), final_position(R,(X_1,Y_1),T-1), T>0.
 
 %---------------------------------------------------------------------------------------------------------------------------
+
+% edge_conflict(R1,R2,T) :- Neben einander, positionen tauschen
+%1{}1 :- edge_conflict(R1,R2,T), node() in andere achsen richtung vorhanden
 
 % R1:
 % C_D=0 : (3,5,1) -> (3,4,2) -> (3,3,3) -> (3,2,4) -> (3,1,5)

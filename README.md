@@ -17,7 +17,8 @@ Further implementations will be done with Python or Anser Set Programming, speci
 ## Directory Structure
 
 - './encodings/m/' contains all encodings for the m-domain
-- ...
+- './encodings/merger/' contains different encoding versions for the plan merger
+- './instances/benchmarks/' contains benchmark instances which are used for testing the plan merger encodings
 
 
 ## Contact

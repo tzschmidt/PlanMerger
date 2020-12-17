@@ -2,7 +2,7 @@
 
 ## About
 
-Our PlanMerger tries to find effective and cost efficent solutions for collisions in Multi-Agent-Pathfinding.
+Our PlanMerger tries to find effective and cost efficient solutions for collisions in Multi-Agent-Pathfinding.
 To improve scalablity and performance the problem instance with multiple agents will be divided into multiple instances with one agent each.
 These instances are solved by a solver separately and subsequently merged into the final solution.
 

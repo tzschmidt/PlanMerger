@@ -1,28 +1,17 @@
-﻿## Ideen für Plan merging
+﻿## First Idea for plan merging
 
-Es gibt zwei Arten von Roboter-Roboter Kollisionen:
-1. Mehrere Roboter befinden sich zur selben Zeit an der selben Stelle.
-2. Zwei Roboter gehen ineinander vorbei.
+There are two types of collisions between robots we have to keep in mind:
+1. Multiple robots are at the same space and at the same time.
+2. Two robots want to go through each other.
 
-
-(((Zu dem zweiten Punkt: Bei der Generierung der Pläne der einzelnen Roboter könnte man bei jeder Bewegung zu diesem Zeitpunkt ein Statement erstellen, welches die Bewegungsrichtung angibt. Wenn sich eine Roboter auf Position (1,1) zur Zeit t=2 nach rechts bewegt, wird das Statement mit diesen drei Parametern wahr. Alle Roboter dürfen nun nicht zur Zeit t=2 von der rechten Seite auf die Position (1,1) wandern.)))
-
-
-**Fehler Behebung:** 
-
-
-**Idee „Warten“:**
-(Warten eines  Roboters bedeutet in diesem Fall, dass der Zeit Wert aller nachfolgenden Bewegungen des Roboters um einen bestimmten Betrag erhöht wird.)
-
-Falls eine Kollision auftritt könnte eines der Roboter warte. Dazu könnte man Prioritäten benutzen, die zum Beispiel von der ID abhängt. Gibt es also einen Konflikt zwischen zwei Robotern, wartet der mit der niedrigeren ID.
-Eine andere Idee währe, dass der Roboter der näher an seinem Ziel ist (eine geringere Distanz zu seiner Picking Station hat) eine höhere Priorität hat. Der Gedanke dahinter ist, dass Roboter, die schon an ihrem Ziel sind, andere Roboter nicht mehr so stark beeinträchtigen. Bei gleicher Distanz zum Ziel gilt wieder höhere ID = Priorität.
+**Idea „Waiting“:**
+(Waiting in this case means, that the time value of each following movement of the robot is incremented by one.)
+In the case a collision occurs, one of the robots could simply wait. To decide which one of the robots should wait we could use certain priorities. One idea for priority is to use the robot ID, so that the robot with a lower ID has to wait.
+Another Idea would be to use the distance to the shelve of the robots as a measurement of priority, so that the robot who is further away form their respective goal has to wait. We do this to “boost” robots who are already close to their goal, because robots who are on their respective shelve don’t move much and as such, are much less likely to inhibit other robots. In case that multiple robots have the same priority, we would simply use the ID again.
 
 
-**Problem:** Zwei Roboter könnten gegenseitig unendlich lange aufeinander warten. Man müsste also den Pfad des Roboters mit höherer Priorität neu generieren.
+**Problem of the second type of collision:** A big problem we are still facing is that the “waiting” – Idea only really works for the first type of collision but not the second one, in which two robots want to get past each other. In that case one of the robots would wait, but the other robot still couldn’t go through the waiting robot. The only real choice we have is to generate a new path for one of the robots. 
 
-**Idee:** Man generiert den Pfad dieses Roboters von der aktuellen Position neu und betrachtet den anderen, wartenden Roboter als eine Wand (also man löscht den Highway Knoten unter ihm.). Sollte dies nicht funktionieren, kann man versuchen den Pfad des anderen Roboters neu zu generieren.
+**Idea „New path with a new obstacle“:** To solve this new problem we could generate a new path for the robot with higher priority in a similar way that the first paths of the robots hade been created. The only difference now is that for this new path the other robot (with lower ID) would act like a wall. This would force the robot with higher priority to go around the other robot and both robots wouldn’t try to go through each other any more.
 
-
-
-(Idee: „Pfad umdrehen“)
-
+**Idea „Flipping the path“:** Lastly, we could also try, if possible to simply flip or mirror the path of one of the robots on a certain axis. For example if we had a robot that hade to go up “n” tiles and then right “m” tiles, we could if this would create a collision simply flip that path so that the robot goes first “m” tiles to the right and then “n” tiles up. This would obviously only work if the flipped path would result in new collisions with other robots or with a wall.

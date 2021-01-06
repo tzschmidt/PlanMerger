@@ -7,5 +7,10 @@ At the moment (version 2) merger encodings include all needed instances and shou
     + Can not detect new collisions caused by waiting
     + !not complete/ does not run!
 - **Version 2**
-    + ...
+    + Same idea as Version 1
+    + removes plans with new collisions
+    + does not iterate until all collisions resolved, but chooces other plan (could cause problems on plans with little possible wait variations
+    + can solve vertex constraints
+    + TODO edge constraints
+    
 

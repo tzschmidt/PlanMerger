@@ -3,7 +3,7 @@ from tkinter import filedialog as fd
 from os import listdir
 
 
-def prep(instance_dir, visual=True, advanced_benchmark_structure=False, to_file=False, output_directory=None):
+def prep(instance_dir, visual=True, advanced_benchmark_structure=False, to_file=False, output_directory=None, output_name="out"):
     if visual:
         if advanced_benchmark_structure:
             benchmark_dir = fd.askdirectory(initialdir=instance_dir, title="Select the Benchmark")
@@ -26,8 +26,8 @@ def prep(instance_dir, visual=True, advanced_benchmark_structure=False, to_file=
                         output_dir = fd.askdirectory(initialdir=instance_dir, title="Select the Output Directory")
                     else:
                         output_dir = output_directory
-                    if output_directory:
-                        f = open(output_dir + "/out.lp", "w")
+                    if output_dir:
+                        f = open(output_dir + f"/{output_name}.lp", "w")
                         f.write(res_string)
                         f.close()
 

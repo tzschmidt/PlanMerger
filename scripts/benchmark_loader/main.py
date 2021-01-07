@@ -35,6 +35,7 @@ def get_instance_dir():
 if __name__ == '__main__':
     instance_dir = get_instance_dir()
 
+    output_name = "out"
     to_file = False
     output_dir = None
     if sys.argv:
@@ -44,10 +45,16 @@ if __name__ == '__main__':
                 to_file = True
             elif x == "-d":
                 prev = x
+            elif x == "-n":
+                prev = x
             elif prev == "-d":
                 output_dir = x
+            elif prev == "-n":
+                output_name = x
 
-    prep(instance_dir=instance_dir, advanced_benchmark_structure=True, to_file=to_file, output_directory=output_dir)
+    prep(instance_dir=instance_dir, advanced_benchmark_structure=True, to_file=to_file, output_directory=output_dir,
+         output_name=output_name)
 
+# -n [filename] to specify the output filename
 # -f to export output to file
 # -d [directory] to specify output directory

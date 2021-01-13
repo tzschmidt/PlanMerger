@@ -12,5 +12,8 @@ At the moment (version 2) merger encodings include all needed instances and shou
     + does not iterate until all collisions resolved, but chooces other plan (could cause problems on plans with little possible wait variations
     + can solve vertex constraints
     + TODO edge constraints
+- **Version 3**
+    + tries to add edge constraints to V2
+    + WIP
     
 

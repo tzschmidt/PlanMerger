@@ -10,10 +10,12 @@ At the moment (version 2) merger encodings include all needed instances and shou
     + Same idea as Version 1
     + removes plans with new collisions
     + does not iterate until all collisions resolved, but chooces other plan (could cause problems on plans with little possible wait variations
-    + can solve vertex constraints
+    + can solve vertex constraints (benchmarks 1 and 5)
     + TODO edge constraints
 - **Version 3**
-    + tries to add edge constraints to V2
-    + WIP
+    + adds edge constraints to V2
+    + merged plans seem unintuitive due to randomness
+    + first tests on benchmark 2 successful
+    + further testing requiered
     
 

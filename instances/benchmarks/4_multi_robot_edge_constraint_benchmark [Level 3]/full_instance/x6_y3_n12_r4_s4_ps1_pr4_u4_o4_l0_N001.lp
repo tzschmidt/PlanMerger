@@ -55,10 +55,10 @@ init(object(robot,3),value(at,(3,3))).
 init(object(robot,4),value(at,(4,3))).
 
 % SHELVES
-init(object(shelf,1),value(at,(1,2))).
-init(object(shelf,2),value(at,(6,2))).
-init(object(shelf,3),value(at,(1,3))).
-init(object(shelf,4),value(at,(6,3))).
+init(object(shelf,1),value(at,(6,2))).
+init(object(shelf,2),value(at,(1,2))).
+init(object(shelf,3),value(at,(6,3))).
+init(object(shelf,4),value(at,(1,3))).
 
 % PRODUCTS
 init(object(product,1),value(on,(1,1))).

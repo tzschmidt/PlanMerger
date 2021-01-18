@@ -21,6 +21,8 @@
 
 % init
 
+#const horizon=10.
+
 % HIGHWAYS
 init(object(highway,1),value(at,(2,2))).
 init(object(highway,2),value(at,(3,2))).

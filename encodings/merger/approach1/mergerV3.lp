@@ -78,8 +78,8 @@ newpos(R,(X,Y),T) :- newpos(R,(X,Y),T-1), not newpos(R,(X+1,Y),T), not newpos(R,
 occurs(object(robot,R),action(move,(DX,DY)),T+W1+W2) :- occurs1(object(robot,R),action(move,(DX,DY)),T), wait(R,T,W1), robot(R), dodget(R,T,W2), dodgem(R,T,(0,0)).
 
 % add new actions for dodge
-occurs(object(robot,R),action(move,(DX,DY)),T+W1+W2) :- dodgem(R,T,(DX,DY)), DX!=0, DY!=0, wait(R,T,W1), dodget(R,T,W2), robot(R).
-occurs(object(robot,R),action(move,(-DX,-DY)),T+W1+W2+1) :- dodgem(R,T,(DX,DY)), DX!=0, DY!=0, wait(R,T,W1), dodget(R,T,W2), robot(R).
+occurs(object(robot,R),action(move,(DX,DY)),T+W1+W2+1) :- dodgem(R,T,(DX,DY)), 1{DX!=0; DY!=0}1, wait(R,T,W1), dodget(R,T,W2), robot(R).
+occurs(object(robot,R),action(move,(-DX,-DY)),T+W1+W2+2) :- dodgem(R,T,(DX,DY)), 1{DX!=0; DY!=0}1, wait(R,T,W1), dodget(R,T,W2), robot(R).
 
 %#show check/1.
 %#show tlimit/2.

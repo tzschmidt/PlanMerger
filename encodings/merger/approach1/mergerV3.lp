@@ -22,14 +22,25 @@ tlimit(R,L) :- L = horizon - N,  N == #sum{1,T:occurs1(object(robot,R),action(mo
 
 % generate wait times
 count(R,0..L) :- tlimit(R,L).
-wait(R,0,0) :- robot(R).
-1{wait(R,T,N) : count(R,N)}1 :- robot(R), time(T). 
+%wait(R,0,0) :- robot(R).
+1{wait(R,T,N) : count(R,N)}1 :- robot(R), nulltime(T). 
+%wait(1,0..horizon,0).
+%wait(2,0..horizon,1).
+%wait(3,0..horizon,1).
+%wait(4,0..horizon,2).
+
 
 % generate dodge times/delay
 dcount(R,0) :- robot(R).
 dcount(R,N) :- tlimit(R,L), dcount(R,N-2), N<=L.
 dodget(R,0,0) :- robot(R).
 1{dodget(R,T,N) : dcount(R,N)}1 :- robot(R), time(T).
+%dodget(1,1..horizon,0).
+%dodget(2,1..horizon,0).
+%dodget(3,1..horizon,2).
+%dodget(4,1..horizon,2).
+
+
 
 % remove invalid order
 :- wait(R,T1,N1), wait(R,T2,N2), T1<T2, N1>N2.
@@ -40,6 +51,11 @@ dodget(R,0,0) :- robot(R).
 
 % generate dodge move before dodge delay
 1{dodgem(R,T,(DX,DY)) : dir(DX,DY)}1 :- dodget(R,T,N1), dodget(R,T+1,N2), N1<N2, nulltime(T), robot(R).
+%dodgem(3,0,(1,0)).
+%dodgem(4,0,(0,1)).
+
+
+
 dodgem(R,T,(0,0)) :- dodget(R,T,N1), dodget(R,T+1,N2), N1>=N2, nulltime(T), robot(R).
 
 % remove invalid direction
@@ -67,19 +83,24 @@ newpos(R,(X,Y),T+W1+W2+2) :- robot(R), position(R,(X,Y),T), nulltime(T), wait(R,
 newpos(R,(X,Y),T) :- newpos(R,(X,Y),T-1), not newpos(R,(X+1,Y),T), not newpos(R,(X-1,Y),T), not newpos(R,(X,Y+1),T), not newpos(R,(X,Y-1),T), robot(R), nulltime(T).
 
 % vertex constraint 
-:- newpos(R1,(X,Y),T), newpos(R2,(X,Y),T), nulltime(T), R1<R2.
+:- newpos(R1,(X,Y),T), newpos(R2,(X,Y),T), nulltime(T), robot(R1), robot(R2), R1!=R2.
 % edge constraint
-:- newpos(R1,(X1,Y1),T), newpos(R2,(X2,Y2),T), nulltime(T), R1<R2, newpos(R1,(X2,Y2),T-1), newpos(R2,(X1,Y1),T-1).
+:- newpos(R1,(X1,Y1),T), newpos(R2,(X2,Y2),T), nulltime(T), robot(R1), robot(R2), R1!=R2, newpos(R1,(X2,Y2),T-1), newpos(R2,(X1,Y1),T-1).
+% out of bounds
+:- newpos(R,(X,Y),T), robot(R), nulltime(T), not node(X,Y).
 
 %##########################################
 % output (maybe move to extra file)
 % 
 % transform output if no dodge
-occurs(object(robot,R),action(move,(DX,DY)),T+W1+W2) :- occurs1(object(robot,R),action(move,(DX,DY)),T), wait(R,T,W1), robot(R), dodget(R,T,W2), dodgem(R,T,(0,0)).
+%occurs(object(robot,R),action(move,(DX,DY)),T+W1+W2) :- occurs1(object(robot,R),action(move,(DX,DY)),T), wait(R,T,W1), robot(R), dodget(R,T,W2), dodgem(R,T,(0,0)).
+%
+%add new actions for dodge
+%occurs(object(robot,R),action(move,(DX,DY)),T+W1+W2+1) :- dodgem(R,T,(DX,DY)), 1{DX!=0; DY!=0}1, wait(R,T,W1), dodget(R,T,W2), robot(R).
+%occurs(object(robot,R),action(move,(-DX,-DY)),T+W1+W2+2) :- dodgem(R,T,(DX,DY)), 1{DX!=0; DY!=0}1, wait(R,T,W1), dodget(R,T,W2), robot(R).
 
-% add new actions for dodge
-occurs(object(robot,R),action(move,(DX,DY)),T+W1+W2+1) :- dodgem(R,T,(DX,DY)), 1{DX!=0; DY!=0}1, wait(R,T,W1), dodget(R,T,W2), robot(R).
-occurs(object(robot,R),action(move,(-DX,-DY)),T+W1+W2+2) :- dodgem(R,T,(DX,DY)), 1{DX!=0; DY!=0}1, wait(R,T,W1), dodget(R,T,W2), robot(R).
+% transform new positions into output
+occurs(object(robot,R),action(move,(DX,DY)),T) :- time(T), newpos(R,(X1,Y1),T), newpos(R,(X2,Y2),T-1), DX=X1-X2, DY=Y1-Y2, 1{X1!=X2; Y1!=Y2}1.
 
 %#show check/1.
 %#show tlimit/2.

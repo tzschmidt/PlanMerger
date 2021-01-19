@@ -1,6 +1,6 @@
 # Approach 1
 
-At the moment (version 2) merger encodings include all needed instances and should be run alone. Identical Versions with different instances are noted with \_N.
+Merger encodings do not include benchmarks and should be run with a fitting benchmark and horizon. Expects input plans in the form of occurs1(...). Identical Versions with different instances are noted with \_N.
 
 - **Version 1**
     + Generates possible movement delays at different moments in time, if collisions were detected

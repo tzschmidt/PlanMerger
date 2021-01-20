@@ -16,6 +16,6 @@ Merger encodings do not include benchmarks and should be run with a fitting benc
     + adds edge constraints to V2
     + merged plans seem unintuitive due to randomness
     + first tests on benchmark 2 successful
-    + further testing requiered
+    + horizon moved to benchmarks
     
 

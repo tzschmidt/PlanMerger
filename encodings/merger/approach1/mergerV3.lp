@@ -1,9 +1,9 @@
-
-#const horizon=10.
+% moved to benchmarks
+%#const horizon=10.
 time(1..horizon).
 nulltime(0..horizon).
 
-% not needed atm
+% directions 
 dir(1,0). dir(-1,0). dir(0,1). dir(0,-1).
 
 % TODO replace init... with robot(R)
@@ -22,25 +22,13 @@ tlimit(R,L) :- L = horizon - N,  N == #sum{1,T:occurs1(object(robot,R),action(mo
 
 % generate wait times
 count(R,0..L) :- tlimit(R,L).
-%wait(R,0,0) :- robot(R).
 1{wait(R,T,N) : count(R,N)}1 :- robot(R), nulltime(T). 
-%wait(1,0..horizon,0).
-%wait(2,0..horizon,1).
-%wait(3,0..horizon,1).
-%wait(4,0..horizon,2).
-
 
 % generate dodge times/delay
 dcount(R,0) :- robot(R).
 dcount(R,N) :- tlimit(R,L), dcount(R,N-2), N<=L.
 dodget(R,0,0) :- robot(R).
 1{dodget(R,T,N) : dcount(R,N)}1 :- robot(R), time(T).
-%dodget(1,1..horizon,0).
-%dodget(2,1..horizon,0).
-%dodget(3,1..horizon,2).
-%dodget(4,1..horizon,2).
-
-
 
 % remove invalid order
 :- wait(R,T1,N1), wait(R,T2,N2), T1<T2, N1>N2.
@@ -51,10 +39,6 @@ dodget(R,0,0) :- robot(R).
 
 % generate dodge move before dodge delay
 1{dodgem(R,T,(DX,DY)) : dir(DX,DY)}1 :- dodget(R,T,N1), dodget(R,T+1,N2), N1<N2, nulltime(T), robot(R).
-%dodgem(3,0,(1,0)).
-%dodgem(4,0,(0,1)).
-
-
 
 dodgem(R,T,(0,0)) :- dodget(R,T,N1), dodget(R,T+1,N2), N1>=N2, nulltime(T), robot(R).
 

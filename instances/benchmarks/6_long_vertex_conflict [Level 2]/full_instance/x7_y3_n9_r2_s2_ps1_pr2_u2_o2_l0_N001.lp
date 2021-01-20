@@ -42,7 +42,7 @@ init(object(node,9),value(at,(6,3))).
 init(object(node,11),value(at,(7,2))).
 
 % PICKING STATION
-init(object(pickingStation,1),value(at,(4,1))).
+init(object(pickingStation,1),value(at,(7,1))).
 
 % ROBOTS
 init(object(robot,1),value(at,(2,1))).

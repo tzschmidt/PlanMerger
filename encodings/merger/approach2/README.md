@@ -9,4 +9,8 @@ Currently (version 2) merger encodings include all needed instances and should b
     + Checks solutions for new crashes and fixes them through iterations
     + Does not fullfil Edge Constraints
     + Benchmark tests with instances 1 and 5 were successful
-
+- **Version 3**
+    + Does fullfil Edge Constraints if one of the 2 robots hase room to dodge
+    + Edge constraint does not work when another robot blocks the dodge direction
+    + Works for benchmark 1,2 and 5
+    + Does not work for benchmark 3 and 4 (doesen't finish) and benchmark 6 (unsatisfiable)

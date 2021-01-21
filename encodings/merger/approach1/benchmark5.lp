@@ -1,28 +1,3 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% = BENCHMARK 3 = [ VERTEX CONSTRAINT - MULTI ROBOT ] ======
-%
-% = Instance Statistics ====================================
-% Grid Size X:                      4
-% Grid Size Y:                      5
-% Number of Nodes:                  9
-% Number of Highway Nodes:          5
-% Number of Robots:                 3
-% Number of Shelves:                3
-% Number of Picking Stations:       1
-% Number of Products:               3
-% Number of Product Units in Total: 3
-% Number of Orders:                 3
-% Number of Orders Lines:           0
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-#program base.
-
-% init
-
-#const horizon=10.
-
 % HIGHWAYS
 init(object(highway,1),value(at,(2,2))).
 init(object(highway,2),value(at,(2,3))).
@@ -77,3 +52,15 @@ init(object(order,2),value(pickingStation,1)).
 init(object(order,2),value(line,(2,1))).
 init(object(order,3),value(pickingStation,1)).
 init(object(order,3),value(line,(3,1))).
+
+occurs1(object(robot,1),action(move,(1,0)),1).
+occurs1(object(robot,1),action(move,(1,0)),2).
+occurs1(object(robot,1),action(move,(1,0)),3).
+
+occurs1(object(robot,2),action(move,(0,-1)),1).
+occurs1(object(robot,2),action(move,(0,-1)),2).
+
+occurs1(object(robot,3),action(move,(0,-1)),1).
+occurs1(object(robot,3),action(move,(0,-1)),2).
+occurs1(object(robot,3),action(move,(0,-1)),3).
+occurs1(object(robot,3),action(move,(0,-1)),4).

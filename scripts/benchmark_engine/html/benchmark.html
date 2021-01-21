@@ -1,0 +1,40 @@
+<div class="benchmark" id="b{{ B INDEX }}">
+    <h2>{{ NAME }}</h2>
+    <h6>{{ PATH }}</h6>
+    <h4 class="outcome {{ PASSED }}">{{ PASSED }}</h4>
+    <div class="conflicts">
+        <h3>Computation Time : <span style="opacity: 0.5">00:00:000</span></h3>
+    </div>
+    <div class="conflicts">
+        <h3>Solution In Time Horizon :</h3>
+        <div class="indicator {{ IN HORIZON }}"></div>
+    </div>
+    <div class="conflicts">
+        <h3>Vertex Conflicts :</h3>
+        <div class="indicator {{ VC PASSED }}"></div>
+        <ul>
+            {{ VERTEX CONFLICTS }}
+        </ul>
+        <br>
+    </div>
+
+    <div class="conflicts">
+        <h3>Edge Conflicts :</h3>
+        <div class="indicator {{ EC PASSED }}"></div>
+        <ul>
+            {{ EDGE CONFLICTS }}
+        </ul>
+        <br>
+    </div>
+    
+    <div class="conflicts">
+        <h3>Invalid Movements :</h3>
+        <div class="indicator {{ IM PASSED }}"></div>
+        <ul>
+            {{ INVALID MOVEMENTS }}
+        </ul>
+        <br>
+    </div>
+
+    <a href='{{ IMAGE }}' target="_blank"><div class="image" style="background-image: url({{ IMAGE }})"> </div></a>
+</div>

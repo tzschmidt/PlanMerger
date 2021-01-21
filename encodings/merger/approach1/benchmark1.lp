@@ -1,31 +1,14 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% = BENCHMARK 1 = [ VERTEX CONSTRAINT ] ====================
-%
-% - Shouldn't be solvable at Horizon = 4, because that could
-%   only work if the robots would move in a straight line
-%   without waiting, which would result in a crash
-%
-% = Instance Statistics ====================================
-% Grid Size X:                      5
-% Grid Size Y:                      5
-% Number of Nodes:                  9
-% Number of Highway Nodes:          5
-% Number of Robots:                 2
-% Number of Shelves:                2
-% Number of Picking Stations:       1
-% Number of Products:               2
-% Number of Product Units in Total: 2
-% Number of Orders:                 2
-% Number of Orders Lines:           0
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+occurs1(object(robot,1),action(move,(0,-1)),1).
+occurs1(object(robot,1),action(move,(0,-1)),2).
+occurs1(object(robot,1),action(move,(0,-1)),3).
+occurs1(object(robot,1),action(move,(0,-1)),4).
 
-#program base.
+occurs1(object(robot,2),action(move,(1,0)),1).
+occurs1(object(robot,2),action(move,(1,0)),2).
+occurs1(object(robot,2),action(move,(1,0)),3).
+occurs1(object(robot,2),action(move,(1,0)),4).
 
 % init
-
-#const horizon=10.
 
 % HIGHWAYS
 init(object(highway,1),value(at,(3,2))).
@@ -34,7 +17,7 @@ init(object(highway,3),value(at,(3,3))).
 init(object(highway,4),value(at,(4,3))).
 init(object(highway,5),value(at,(3,4))).
 
-%NODES
+% NODES
 init(object(node,1),value(at,(3,1))).
 init(object(node,2),value(at,(3,2))).
 init(object(node,3),value(at,(1,3))).

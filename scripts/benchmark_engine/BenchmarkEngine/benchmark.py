@@ -1,7 +1,20 @@
-import os
+#!/usr/bin/env python
+
+import clingo
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import webbrowser
+import time
+from abc import ABC
+
+__author__ = "Hannes Weichelt"
+__credits__ = ["Hannes Weichelt", "Tom Schmidt", "Julian Bruhns"]
+__license__ = "GPL"
+__version__ = "1.0.1"
+__maintainer__ = "Hannes Weichelt"
+__email__ = "hweichelt@uni-postdam.de"
+__status__ = "Development"
 
 colors = ['red', 'blue', 'yellow', 'green', 'purple', 'pink', 'orange', 'grey', 'lime', 'black']
 
@@ -26,7 +39,7 @@ class Benchmark:
             
             h = self.get_benchmark_horizon(instance)
             if h == -1:
-                raise RuntimeError("Bechmark Format Error : The Benchmark hast to contain a time horizon in the form"
+                raise RuntimeError("Benchmark Format Error : The Benchmark hast to contain a time horizon in the form"
                                    "(#const horizon=[0>h])")
             self.horizon = h
 
@@ -41,27 +54,6 @@ class Benchmark:
         else:
             raise ValueError("Benchmarks can only be initialised with either (benchmark_path) or "
                              "(inits, robot_movements) as parameters")
-
-        """
-        elif len(inp) == 2:
-            inits = inp[0]
-            robot_movements = inp[1]
-            # initialise the dictionaries (self.robots and self.shelves) and the lists (self.nodes, self.highways)
-            self.robots, self.shelves, self.nodes, self.highways = self.format_benchmark_inits(inits)
-            # initialise the dictionary self.original_plans which contains the original plans movements
-            self.original_plans = self.format_benchmark_movements(robot_movements)
-
-            # Fill the original plans with [0,0] movements at the timesteps where there is not movement
-            self.original_plans = self.get_filled_plans(self.original_plans)
-
-            if verbose:
-                print(f"nodes: {self.nodes}")
-                print(f"highways: {self.highways}")
-                print(f"shelves: {self.shelves}")
-                print(f"robots: {self.robots}")
-                print(f"original plans: {self.original_plans}")
-                self.plot()
-        """
 
     @staticmethod
     def read_benchmark_files(path):
@@ -89,7 +81,7 @@ class Benchmark:
                         plans.append(f.read().replace('\n', ' '))
                         f.close()
 
-                return instance.replace('\n', ' '), plans
+                return instance, plans
             else:
                 raise ValueError(
                     "The given directory structure for the selected benchmark is incompatible with this programm")
@@ -261,14 +253,20 @@ class Benchmark:
         if os.path.isfile(path):
             if path.endswith('.lp'):
                 f = open(path, "r")
-                plans = f.read()
+                plan = f.read()
                 f.close()
 
-                robot_movements = Benchmark.split_statements(plans)['occurs']
-                moves = Benchmark.format_benchmark_movements(robot_movements)
-                res = Benchmark.get_filled_plans(moves)
+                res = Benchmark.read_movements_from_string(plan)
 
                 return res
+
+    @staticmethod
+    def read_movements_from_string(plan):
+        robot_movements = Benchmark.split_statements(plan)['occurs']
+        moves = Benchmark.format_benchmark_movements(robot_movements)
+        res = Benchmark.get_filled_plans(moves)
+
+        return res
 
     def plot(self, plans=None, original_plans=True, scale_factor=1, show_text=True, edge_conflicts=None,
              vertex_conflicts=None, save_path=None):
@@ -356,10 +354,10 @@ class BenchmarkBinder:
     def get_benchmarks(self):
         return self.benchmarks
 
-    def evaluate(self, plans):
+    def evaluate(self, merger_path, verbose=0):
         # TODO : implement the plan generation here also with time tracking for the calculation time and remove the
         #        actually unnecessary plans parameter
-        if len(plans) == len(self.benchmarks) > 0:
+        if os.path.isfile(merger_path) and merger_path.endswith('.lp') and self.benchmarks:
             # Remove all of the old plot images in the output/imgs folder
             image_list = [f for f in os.listdir('output/imgs') if f.endswith(".png")]
             for f in image_list:
@@ -371,20 +369,48 @@ class BenchmarkBinder:
             image_paths = []
             invalid_movement_list = []
             in_horizon_list = []
+            solving_times = []
             for i, benchmark in enumerate(self.benchmarks):
                 print(benchmark.name)
-                _, conflicts, invalid_movements, max_t = benchmark.check_solution(plans[i])
-                conflict_list.append(conflicts)
-                name_list.append(benchmark.name)
-                path_list.append(benchmark.path)
-                invalid_movement_list.append(invalid_movements)
-                in_horizon_list.append(max_t <= benchmark.horizon)
-                image_path = f"output/imgs/b_{i}.png"
-                benchmark.plot(vertex_conflicts=conflicts['vertex_conflicts'], edge_conflicts=conflicts['edge_conflicts'],
-                               save_path=image_path, plans=plans[i])
-                image_paths.append(image_path)
 
-            self.output_html(conflict_list, name_list, path_list, image_paths, invalid_movement_list, in_horizon_list)
+                # All the Benchmarks in the binder are solved with clingo and the 'occurs' output is returned
+                try:
+                    plan, solving_time = ClingoSolver.solve(merger_path, benchmark)
+                    plan_formatted = '.\n'.join(plan.split()) + "."
+                    plan_movements = Benchmark.read_movements_from_string(plan_formatted)
+
+                    if verbose:
+                        print("[\n" + plan_formatted + "\n]")
+
+                    _, conflicts, invalid_movements, max_t = benchmark.check_solution(plan_movements)
+                    solving_times.append(solving_time)
+                    conflict_list.append(conflicts)
+                    name_list.append(benchmark.name)
+                    path_list.append(benchmark.path)
+                    invalid_movement_list.append(invalid_movements)
+                    in_horizon_list.append(max_t <= benchmark.horizon)
+                    image_path = f"output/imgs/b_{i}.png"
+                    benchmark.plot(vertex_conflicts=conflicts['vertex_conflicts'], edge_conflicts=conflicts['edge_conflicts'],
+                                   save_path=image_path, plans=plan_movements)
+                    image_paths.append(image_path)
+
+                except InvalidClingoOutputException:
+                    solving_times.append("NOT SOLVABLE OR ERROR OCCURED")
+                    conflicts = {
+                        "vertex_conflicts": [[0, np.array([0, 0])]],
+                        "edge_conflicts": [[0, np.array([0, 0]), np.array([0, 0])]]
+                    }
+                    conflict_list.append(conflicts)
+                    name_list.append(benchmark.name)
+                    path_list.append(benchmark.path)
+                    invalid_movement_list.append([[0, np.array([0,0])]])
+                    in_horizon_list.append(False)
+                    image_path = f"output/imgs/b_{i}.png"
+                    benchmark.plot(save_path=image_path)
+                    image_paths.append(image_path)
+
+            self.output_html(conflict_list, name_list, path_list, image_paths, invalid_movement_list, in_horizon_list,
+                             solving_times)
 
             html_file_path = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/output/out.html'
             self.open_html_file(html_file_path)
@@ -399,7 +425,7 @@ class BenchmarkBinder:
         webbrowser.open(url, new=2)
 
     @staticmethod
-    def output_html(results, names, paths, image_paths, invalid_movements, in_horizon):
+    def output_html(results, names, paths, image_paths, invalid_movements, in_horizon, solving_times):
         if len(results) == len(names) == len(paths) == len(image_paths) == len(invalid_movements) == len(in_horizon):
             f = open("html/quick.html", "r")
             quick = f.read()
@@ -450,6 +476,7 @@ class BenchmarkBinder:
                 benchmark_out = benchmark_out.replace('{{ INVALID MOVEMENTS }}', '\n'.join(ims))
                 benchmark_out = benchmark_out.replace('{{ NAME }}', names[result_index])
                 benchmark_out = benchmark_out.replace('{{ PATH }}', paths[result_index])
+                benchmark_out = benchmark_out.replace('{{ TIME }}', f"{solving_times[result_index]}s")
                 benchmark_out = benchmark_out.replace('{{ IN HORIZON }}', ['passed', 'not-passed'][int(not in_horizon[result_index])])
                 benchmark_out = benchmark_out.replace('{{ VC PASSED }}', ['passed', 'not-passed'][int(bool(vcs))])
                 benchmark_out = benchmark_out.replace('{{ EC PASSED }}', ['passed', 'not-passed'][int(bool(ecs))])
@@ -482,3 +509,43 @@ class BenchmarkBinder:
             f = open("output/out.html", "w")
             f.write(out_string)
             f.close()
+
+
+class InvalidClingoOutputException(Exception):
+    """Raised when the Clingo Solver cannot find either a valid or any model"""
+    pass
+
+
+class ClingoSolver(ABC):
+
+    @staticmethod
+    def solve(merger_path, benchmark):
+        f = open(merger_path, "r")
+        merger = f.read()
+        f.close()
+
+        instance, plans = Benchmark.import_benchmark(benchmark.path)
+
+        ctl = clingo.Control()
+
+        full_benchmark_str = instance + "\n".join(plans) + "\n" + merger
+
+        ctl.add("base", [], full_benchmark_str)
+
+        res = ""
+
+        start = time.time()
+        ctl.ground([("base", [])])
+        solution = ctl.solve(yield_=True)
+        end = time.time()
+
+        with solution as handle:
+            # TODO : not pretty, might have to be changed in the future
+            for m in handle:
+                res = "{}".format(m)
+            handle.get()
+
+        if res:
+            return res, end - start
+        else:
+            raise InvalidClingoOutputException

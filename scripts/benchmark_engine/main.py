@@ -23,15 +23,6 @@ if __name__ == '__main__':
     binder.add_benchmark(b5)
     binder.add_benchmark(b6)
 
-    # preprocessing for the file that contains the calculated occurs. (won't be necessary in the future)
-    # moves_b6 = Benchmark.read_movements_from_file('res.lp')
-    moves_b1 = Benchmark.read_movements_from_file('res_b1.lp')
-    moves_b2 = Benchmark.read_movements_from_file('res_b2.lp')
-    moves_b3 = Benchmark.read_movements_from_file('res_b3.lp')
-    moves_b4 = Benchmark.read_movements_from_file('res_b4.lp')
-    moves_b5 = Benchmark.read_movements_from_file('res_b5.lp')
-    moves_b6 = Benchmark.read_movements_from_file('res_b6.lp')
-
     # evaluation of all the benchmarks stored in the binder (the parameter is the path of the merger.lp file)
     binder.evaluate("/home/hannes/Programming/PlanMerger/encodings/merger/approach1/mergerV3.lp", verbose=1)
     # binder.evaluate("/home/hannes/Programming/Asprilo/testspace/app_4/mergerTest.lp", verbose=1)

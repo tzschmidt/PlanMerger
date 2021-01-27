@@ -74,6 +74,7 @@ init(object(order,1),value(line,(1,1))).
 init(object(order,3),value(pickingStation,1)).
 init(object(order,3),value(line,(2,1))).
 
+#const horizon =10.
 occurs1(object(robot,1),action(move,(0,1)),1).
 occurs1(object(robot,1),action(move,(0,1)),2).
 

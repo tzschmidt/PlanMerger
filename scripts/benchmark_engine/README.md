@@ -10,7 +10,7 @@ These packages are needed to execute the script:
 
 they can be installed with `conda install numpy` and `conda install numpy` (for the clingo installation process consult https://potassco.org/doc/start/).
 
-It is also required for the script to work that you use a Benchmark Structure that is similar to the one in this repo. Each Benchmark Folder has to therefore contain a folder named `full instance` which contains the Benchmarks instance with all robots and a folder called `plans` which only contains the basic plans for each robot (in one file ore multiple)
+It is also required for the script to work that you use a Benchmark Structure that is similar to the one in this repo. Each Benchmark Folder has to therefore contain a folder named `full instance` which contains the Benchmarks instance with all robots and a folder called `plans` which only contains the basic plans for each robot (in one file ore multiple (ONLY MULTIPLE AT THE MOMENT))
 
 **Necessary Benchmark Directory Structure:**
 

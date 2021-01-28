@@ -18,7 +18,6 @@ __status__ = "Development"
 
 colors = ['red', 'blue', 'yellow', 'green', 'purple', 'pink', 'orange', 'grey', 'lime', 'black']
 
-
 class Benchmark:
 
     def __init__(self, *inp, verbose=0):
@@ -58,12 +57,16 @@ class Benchmark:
     @staticmethod
     def read_benchmark_files(path):
         instance, plans = Benchmark.import_benchmark(path)
-        # print(Benchmark.split_statements(instance))
+        inits, robot_movements = Benchmark.format_benchmark_files(instance, plans)
+        return inits, robot_movements, instance
+
+    @staticmethod
+    def format_benchmark_files(instance, plans):
         inits = Benchmark.split_statements(instance)['init']
         robot_movements = []
         for i, plan in enumerate(plans):
             robot_movements += Benchmark.split_statements(plan)['occurs1']
-        return inits, robot_movements, instance
+        return inits, robot_movements
 
     @staticmethod
     def import_benchmark(path):
@@ -293,28 +296,28 @@ class Benchmark:
             ax.add_patch(rectangle)
 
         for robot in list(zip(self.robots.keys(), self.robots.values())):
-            ax.scatter(robot[1][0] - 0.5, robot[1][1] - 0.5, s=(10 ** 3.5) * scale_factor, c=colors[robot[0] - 1],
-                       marker='s', alpha=0.5)
+            ax.scatter(robot[1][0] - 0.5, robot[1][1] - 0.5, s=(10 ** 3.5) * scale_factor,
+                       c=colors[(robot[0] - 1) % len(colors)], marker='s', alpha=0.5)
             if scale_factor >= 0.5 and show_text:
                 ax.annotate(f'robot {robot[0]}', (robot[1][0] - 0.63, robot[1][1] - 0.53))
 
         for shelf in list(zip(self.shelves.keys(), self.shelves.values())):
-            ax.scatter(shelf[1][0] - 0.5, shelf[1][1] - 0.5, s=(10 ** 3.5) * scale_factor, c=colors[shelf[0] - 1],
-                       marker='o', alpha=0.5)
+            ax.scatter(shelf[1][0] - 0.5, shelf[1][1] - 0.5, s=(10 ** 3.5) * scale_factor,
+                       c=colors[(shelf[0] - 1) % len(colors)], marker='o', alpha=0.5)
             if scale_factor >= 0.5 and show_text:
                 ax.annotate(f'shelf {shelf[0]}', (shelf[1][0] - 0.62, shelf[1][1] - 0.53))
 
         if original_plans:
             for plan in list(zip(self.original_plans.keys(), self.original_plans.values())):
                 times, positions = self.calculate_plan_positions(plan[1], plan[0])
-                ax.plot(positions.T[0] - 0.5, positions.T[1] - 0.5, c=colors[plan[0] - 1], alpha=0.125,
+                ax.plot(positions.T[0] - 0.5, positions.T[1] - 0.5, c=colors[(plan[0] - 1) % len(colors)], alpha=0.125,
                         linewidth=5 * scale_factor,
                         marker='o')
 
         if plans:
             for plan in list(zip(plans.keys(), plans.values())):
                 times, positions = self.calculate_plan_positions(plan[1], plan[0])
-                ax.plot(positions.T[0] - 0.5, positions.T[1] - 0.5, c=colors[plan[0] - 1], alpha=0.25,
+                ax.plot(positions.T[0] - 0.5, positions.T[1] - 0.5, c=colors[(plan[0] - 1) % len(colors)], alpha=0.25,
                         linewidth=15 * scale_factor,
                         marker='o', markersize=15 * scale_factor)
 
@@ -334,6 +337,133 @@ class Benchmark:
             plt.savefig(save_path)
         else:
             plt.show()
+
+
+class RandomBenchmark(Benchmark):
+    def __init__(self, size_x, size_y, n_robots, time_horizon=10, verbose=0, random_seed=None):
+        path = 'RANDOM BENCHMARK'
+        self.path = path
+        self.name = path.split('/')[-1]
+        # inits, robot_movements, instance = self.read_benchmark_files(path)
+
+        self.n_robots = n_robots
+
+        rand_size_map, rand_robots, rand_shelves = self.gen_benchmark_data(size_x, size_y, n_robots, random_seed=random_seed)
+        rand_plans = self.gen_simple_robot_plans(rand_robots, rand_shelves)
+        str_nodes, str_plans, str_robots, str_shelves = self.format_output(rand_size_map, rand_plans)
+
+        self.instance = '\n' + str_robots + '\n' + str_shelves + '\n' + str_nodes + '\n' + f'#const horizon={time_horizon}.'
+        self.plans_str_split = self.split_plans_str(str_plans)
+        inits, robot_movements = self.format_benchmark_files(self.instance, self.plans_str_split)
+
+        # initialise the dictionaries (self.robots and self.shelves) and the lists (self.nodes, self.highways)
+        self.robots, self.shelves, self.nodes, self.highways = self.format_benchmark_inits(inits)
+        # initialise the dictionary self.original_plans which contains the original plans movements
+        self.original_plans = self.format_benchmark_movements(robot_movements)
+
+        # Fill the original plans with [0,0] movements at the timesteps where there is not movement
+        self.original_plans = self.get_filled_plans(self.original_plans)
+
+        h = self.get_benchmark_horizon(self.instance)
+        if h == -1:
+            raise RuntimeError("Benchmark Format Error : The Benchmark hast to contain a time horizon in the form"
+                               "(#const horizon=[0>h].)")
+        self.horizon = h
+
+        if verbose:
+            print(f"nodes: {self.nodes}")
+            print(f"highways: {self.highways}")
+            print(f"shelves: {self.shelves}")
+            print(f"robots: {self.robots}")
+            print(f"original plans: {self.original_plans}")
+            self.plot()
+
+    @staticmethod
+    def split_plans_str(plans):
+        occurs = plans.split('\n')
+        plans = {}
+        for o in occurs:
+            robot_id = int(o.split('robot,')[1].split(')')[0])
+            if robot_id in plans:
+                plans[robot_id] += '\n' + o
+            else:
+                plans[robot_id] = o
+        return list(plans.values())
+
+    @staticmethod
+    def get_random_pos(max_x, max_y):
+        if max_x > 0 and max_y > 0:
+            return [np.random.randint(1, max_x + 1), np.random.randint(1, max_y + 1)]
+        else:
+            raise ValueError("max_x and max_y have to be greater than 0!")
+
+    @staticmethod
+    def gen_benchmark_data(size_x, size_y, n_robots, random_seed=None):
+        if size_x * size_y > n_robots * 2:
+            robot_pos = []
+            shelf_pos = []
+            if random_seed:
+                np.random.seed(random_seed)
+
+            for n in range(n_robots):
+                not_unique_pos = True
+                while not_unique_pos:
+                    r_pos = RandomBenchmark.get_random_pos(size_x, size_y)
+                    s_pos = RandomBenchmark.get_random_pos(size_x, size_y)
+                    if (r_pos not in robot_pos + shelf_pos) and (s_pos not in shelf_pos + robot_pos) and r_pos != s_pos:
+                        not_unique_pos = False
+                robot_pos.append(r_pos)
+                shelf_pos.append(s_pos)
+            return (size_x, size_y), robot_pos, shelf_pos
+        else:
+            raise ValueError(f"Your chosen Map size is too small to contain {n_robots} robots and shelves")
+
+    @staticmethod
+    def gen_simple_robot_plans(robot_pos, shelf_pos):
+        res = []
+        for pos in list(zip(robot_pos, shelf_pos)):
+            plan = []
+            d_x = pos[1][0] - pos[0][0]
+            d_y = pos[1][1] - pos[0][1]
+            if d_x != 0:
+                movements_x = list(range(np.sign(d_x), d_x + np.sign(d_x), np.sign(d_x)))
+            else:
+                movements_x = []
+            if d_y != 0:
+                movements_y = list(range(np.sign(d_y), d_y + np.sign(d_y), np.sign(d_y)))
+            else:
+                movements_y = []
+
+            shuffle = lambda x, y: [[x, y], [y, x]][np.random.randint(0, 1)]
+            shuffled_dirs = shuffle([[x, 0] for x in movements_x], [[0, y] for y in movements_y])
+            for m_1 in shuffled_dirs[0]:
+                plan.append(np.sign(np.array(m_1)))
+            for m_2 in shuffled_dirs[1]:
+                plan.append(np.sign(np.array(m_2)))
+
+            res.append([pos[0], pos[1], plan])
+
+        return res
+
+    @staticmethod
+    def format_output(size_map, plans):
+        nodes_str = []
+        plans_str = []
+        robots_str = []
+        shelves_str = []
+        i = 1
+        for x in range(size_map[0]):
+            for y in range(size_map[1]):
+                nodes_str.append(f'init(object(node,{i}),value(at,({x + 1},{y + 1}))).')
+                i += 1
+
+        for i, plan in enumerate(plans):
+            robots_str.append(f'init(object(robot,{i + 1}),value(at,({plan[0][0]},{plan[0][1]}))).')
+            shelves_str.append(f'init(object(shelf,{i + 1}),value(at,({plan[1][0]},{plan[1][1]}))).')
+            for t, pos in enumerate(plan[2]):
+                plans_str.append(f'occurs1(object(robot,{i + 1}),action(move,({pos[0]},{pos[1]})),{t + 1}).')
+
+        return '\n'.join(nodes_str), '\n'.join(plans_str), '\n'.join(robots_str), '\n'.join(shelves_str)
 
 
 class BenchmarkBinder:
@@ -370,17 +500,22 @@ class BenchmarkBinder:
             invalid_movement_list = []
             in_horizon_list = []
             solving_times = []
+            plans = []
             for i, benchmark in enumerate(self.benchmarks):
                 print(benchmark.name)
 
                 # All the Benchmarks in the binder are solved with clingo and the 'occurs' output is returned
                 try:
+                    print('start solving')
                     plan, solving_time = ClingoSolver.solve(merger_path, benchmark)
+                    print('finished solving')
                     plan_formatted = '.\n'.join(plan.split()) + "."
                     plan_movements = Benchmark.read_movements_from_string(plan_formatted)
 
                     if verbose:
-                        print("[\n" + plan_formatted + "\n]")
+                        if isinstance(benchmark, RandomBenchmark):
+                            print("- INSTANCE [\n" + benchmark.instance + "\n]")
+                        print("- FINAL PLANS [\n" + plan_formatted + "\n]")
 
                     _, conflicts, invalid_movements, max_t = benchmark.check_solution(plan_movements)
                     solving_times.append(solving_time)
@@ -389,8 +524,10 @@ class BenchmarkBinder:
                     path_list.append(benchmark.path)
                     invalid_movement_list.append(invalid_movements)
                     in_horizon_list.append(max_t <= benchmark.horizon)
+
                     image_path = f"output/imgs/b_{i}.png"
-                    benchmark.plot(vertex_conflicts=conflicts['vertex_conflicts'], edge_conflicts=conflicts['edge_conflicts'],
+                    benchmark.plot(vertex_conflicts=conflicts['vertex_conflicts'],
+                                   edge_conflicts=conflicts['edge_conflicts'],
                                    save_path=image_path, plans=plan_movements)
                     image_paths.append(image_path)
 
@@ -405,6 +542,7 @@ class BenchmarkBinder:
                     path_list.append(benchmark.path)
                     invalid_movement_list.append([[0, np.array([0,0])]])
                     in_horizon_list.append(False)
+
                     image_path = f"output/imgs/b_{i}.png"
                     benchmark.plot(save_path=image_path)
                     image_paths.append(image_path)
@@ -524,7 +662,12 @@ class ClingoSolver(ABC):
         merger = f.read()
         f.close()
 
-        instance, plans = Benchmark.import_benchmark(benchmark.path)
+        try:
+            instance, plans = Benchmark.import_benchmark(benchmark.path)
+        except ValueError:
+            # TODO: check if benchmark is random benchmark (if and oly if):
+            instance = benchmark.instance
+            plans = benchmark.plans_str_split
 
         ctl = clingo.Control()
 

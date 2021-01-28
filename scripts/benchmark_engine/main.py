@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from BenchmarkEngine.benchmark import Benchmark, BenchmarkBinder
+from BenchmarkEngine.benchmark import Benchmark, BenchmarkBinder, RandomBenchmark
 
 if __name__ == '__main__':
 
@@ -12,6 +12,11 @@ if __name__ == '__main__':
     b5 = Benchmark("/home/hannes/Programming/PlanMerger/instances/benchmarks/5_multi_robot_conflict_through_waiting [Level 2]")
     b6 = Benchmark("/home/hannes/Programming/PlanMerger/instances/benchmarks/6_long_vertex_conflict [Level 2]")
 
+    b_rand_1 = RandomBenchmark(5, 5, 11, time_horizon=11, random_seed=666)
+    # b_rand_2 = RandomBenchmark(50, 50, 10, time_horizon=50, random_seed=42)
+    b_rand_2 = RandomBenchmark(5, 5, 11, time_horizon=2, random_seed=42)
+    # b_rand_3 = RandomBenchmark(10, 10, 30, time_horizon=20, random_seed=1337)
+
     # creating a new empty binder
     binder = BenchmarkBinder()
 
@@ -22,6 +27,9 @@ if __name__ == '__main__':
     binder.add_benchmark(b4)
     binder.add_benchmark(b5)
     binder.add_benchmark(b6)
+    binder.add_benchmark(b_rand_1)
+    binder.add_benchmark(b_rand_2)
+    # binder.add_benchmark(b_rand_3)
 
     # evaluation of all the benchmarks stored in the binder (the parameter is the path of the merger.lp file)
     binder.evaluate("/home/hannes/Programming/PlanMerger/encodings/merger/approach1/mergerV3.lp", verbose=1)

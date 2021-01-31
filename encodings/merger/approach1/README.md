@@ -16,10 +16,10 @@ benchmark.lp files in this directory are only for testing and will be removed la
 - **Version 3**
     + adds edge constraints to V2
     + merged plans seem unintuitive due to randomness
-    + first tests on benchmark 2 successful
+    + benchmark tests successful
     + horizon moved to benchmarks
 - **Version 4**
-    + startet work on additional features
+    + additional features
     + locking: lock(object(robot,R)) in the benchmark causes this robot not ot deviate from its orignial plan
-    
+    + A-domain: merger can merge M- and A-domain plans
 

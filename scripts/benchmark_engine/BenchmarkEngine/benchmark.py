@@ -11,7 +11,7 @@ from abc import ABC
 __author__ = "Hannes Weichelt"
 __credits__ = ["Hannes Weichelt", "Tom Schmidt", "Julian Bruhns"]
 __license__ = "GPL"
-__version__ = "1.0.1"
+__version__ = "1.0.3"
 __maintainer__ = "Hannes Weichelt"
 __email__ = "hweichelt@uni-postdam.de"
 __status__ = "Development"
@@ -168,16 +168,13 @@ class Benchmark:
         max_t = max(max([[move[0] for move in plan] for plan in list(filled_plans.values())], key=lambda x: max(x)))
         for robot_id in list(filled_plans.keys()):
             plan = filled_plans[robot_id]
-            plan_sorted = sorted(plan, key=lambda x: x[0])
 
-            for t in range(1, max_t):
-                # insert missing [0,0] movements at timesteps where there is no movement (in between)
-                if plan_sorted[t - 1][0] != t:
-                    plan_sorted = plan_sorted[:t - 1] + [[t, [0, 0]]] + plan_sorted[t - 1:]
-                # insert missing [0,0] movements at timesteps where there is no movement
-                # (at the end if t still smaller than max_t)
-                elif t == len(plan_sorted) and t < max_t:
-                    plan_sorted = plan_sorted + [[t, [0, 0]]]
+            # add a [0,0] movement for each timestep where the robot doesn't change its position.
+            for t in range(1, max_t+1):
+                if t not in [pos[0] for pos in plan]:
+                    plan.append([t, [0, 0]])
+            # sort the resulting plan to have a realistic timeline
+            plan_sorted = sorted(plan, key=lambda x: x[0])
             filled_plans[robot_id] = plan_sorted
         return filled_plans
 
@@ -270,6 +267,13 @@ class Benchmark:
         res = Benchmark.get_filled_plans(moves)
 
         return res
+
+    def print_original_plans(self):
+        print(f'% Original Plans - {self.name}:')
+        for plan in self.original_plans.items():
+            print(f'% [ Original Plan Robot {plan[0]} ]')
+            for move in plan[1]:
+                print(f'occurs1(object(robot,{plan[0]}),action(move,({move[1][0]},{move[1][1]})),{move[0]}).')
 
     def plot(self, plans=None, original_plans=True, scale_factor=1, show_text=True, edge_conflicts=None,
              vertex_conflicts=None, save_path=None):

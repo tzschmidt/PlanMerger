@@ -1,10 +1,22 @@
-import os
+#!/usr/bin/env python
+
+import clingo
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import webbrowser
+import time
+from abc import ABC
+
+__author__ = "Hannes Weichelt"
+__credits__ = ["Hannes Weichelt", "Tom Schmidt", "Julian Bruhns"]
+__license__ = "GPL"
+__version__ = "1.0.3"
+__maintainer__ = "Hannes Weichelt"
+__email__ = "hweichelt@uni-postdam.de"
+__status__ = "Development"
 
 colors = ['red', 'blue', 'yellow', 'green', 'purple', 'pink', 'orange', 'grey', 'lime', 'black']
-
 
 class Benchmark:
 
@@ -26,7 +38,7 @@ class Benchmark:
             
             h = self.get_benchmark_horizon(instance)
             if h == -1:
-                raise RuntimeError("Bechmark Format Error : The Benchmark hast to contain a time horizon in the form"
+                raise RuntimeError("Benchmark Format Error : The Benchmark hast to contain a time horizon in the form"
                                    "(#const horizon=[0>h])")
             self.horizon = h
 
@@ -42,36 +54,19 @@ class Benchmark:
             raise ValueError("Benchmarks can only be initialised with either (benchmark_path) or "
                              "(inits, robot_movements) as parameters")
 
-        """
-        elif len(inp) == 2:
-            inits = inp[0]
-            robot_movements = inp[1]
-            # initialise the dictionaries (self.robots and self.shelves) and the lists (self.nodes, self.highways)
-            self.robots, self.shelves, self.nodes, self.highways = self.format_benchmark_inits(inits)
-            # initialise the dictionary self.original_plans which contains the original plans movements
-            self.original_plans = self.format_benchmark_movements(robot_movements)
-
-            # Fill the original plans with [0,0] movements at the timesteps where there is not movement
-            self.original_plans = self.get_filled_plans(self.original_plans)
-
-            if verbose:
-                print(f"nodes: {self.nodes}")
-                print(f"highways: {self.highways}")
-                print(f"shelves: {self.shelves}")
-                print(f"robots: {self.robots}")
-                print(f"original plans: {self.original_plans}")
-                self.plot()
-        """
-
     @staticmethod
     def read_benchmark_files(path):
         instance, plans = Benchmark.import_benchmark(path)
-        # print(Benchmark.split_statements(instance))
+        inits, robot_movements = Benchmark.format_benchmark_files(instance, plans)
+        return inits, robot_movements, instance
+
+    @staticmethod
+    def format_benchmark_files(instance, plans):
         inits = Benchmark.split_statements(instance)['init']
         robot_movements = []
         for i, plan in enumerate(plans):
             robot_movements += Benchmark.split_statements(plan)['occurs1']
-        return inits, robot_movements, instance
+        return inits, robot_movements
 
     @staticmethod
     def import_benchmark(path):
@@ -89,7 +84,7 @@ class Benchmark:
                         plans.append(f.read().replace('\n', ' '))
                         f.close()
 
-                return instance.replace('\n', ' '), plans
+                return instance, plans
             else:
                 raise ValueError(
                     "The given directory structure for the selected benchmark is incompatible with this programm")
@@ -173,16 +168,13 @@ class Benchmark:
         max_t = max(max([[move[0] for move in plan] for plan in list(filled_plans.values())], key=lambda x: max(x)))
         for robot_id in list(filled_plans.keys()):
             plan = filled_plans[robot_id]
-            plan_sorted = sorted(plan, key=lambda x: x[0])
 
-            for t in range(1, max_t):
-                # insert missing [0,0] movements at timesteps where there is no movement (in between)
-                if plan_sorted[t - 1][0] != t:
-                    plan_sorted = plan_sorted[:t - 1] + [[t, [0, 0]]] + plan_sorted[t - 1:]
-                # insert missing [0,0] movements at timesteps where there is no movement
-                # (at the end if t still smaller than max_t)
-                elif t == len(plan_sorted) and t < max_t:
-                    plan_sorted = plan_sorted + [[t, [0, 0]]]
+            # add a [0,0] movement for each timestep where the robot doesn't change its position.
+            for t in range(1, max_t+1):
+                if t not in [pos[0] for pos in plan]:
+                    plan.append([t, [0, 0]])
+            # sort the resulting plan to have a realistic timeline
+            plan_sorted = sorted(plan, key=lambda x: x[0])
             filled_plans[robot_id] = plan_sorted
         return filled_plans
 
@@ -261,14 +253,27 @@ class Benchmark:
         if os.path.isfile(path):
             if path.endswith('.lp'):
                 f = open(path, "r")
-                plans = f.read()
+                plan = f.read()
                 f.close()
 
-                robot_movements = Benchmark.split_statements(plans)['occurs']
-                moves = Benchmark.format_benchmark_movements(robot_movements)
-                res = Benchmark.get_filled_plans(moves)
+                res = Benchmark.read_movements_from_string(plan)
 
                 return res
+
+    @staticmethod
+    def read_movements_from_string(plan):
+        robot_movements = Benchmark.split_statements(plan)['occurs']
+        moves = Benchmark.format_benchmark_movements(robot_movements)
+        res = Benchmark.get_filled_plans(moves)
+
+        return res
+
+    def print_original_plans(self):
+        print(f'% Original Plans - {self.name}:')
+        for plan in self.original_plans.items():
+            print(f'% [ Original Plan Robot {plan[0]} ]')
+            for move in plan[1]:
+                print(f'occurs1(object(robot,{plan[0]}),action(move,({move[1][0]},{move[1][1]})),{move[0]}).')
 
     def plot(self, plans=None, original_plans=True, scale_factor=1, show_text=True, edge_conflicts=None,
              vertex_conflicts=None, save_path=None):
@@ -295,28 +300,28 @@ class Benchmark:
             ax.add_patch(rectangle)
 
         for robot in list(zip(self.robots.keys(), self.robots.values())):
-            ax.scatter(robot[1][0] - 0.5, robot[1][1] - 0.5, s=(10 ** 3.5) * scale_factor, c=colors[robot[0] - 1],
-                       marker='s', alpha=0.5)
+            ax.scatter(robot[1][0] - 0.5, robot[1][1] - 0.5, s=(10 ** 3.5) * scale_factor,
+                       c=colors[(robot[0] - 1) % len(colors)], marker='s', alpha=0.5)
             if scale_factor >= 0.5 and show_text:
                 ax.annotate(f'robot {robot[0]}', (robot[1][0] - 0.63, robot[1][1] - 0.53))
 
         for shelf in list(zip(self.shelves.keys(), self.shelves.values())):
-            ax.scatter(shelf[1][0] - 0.5, shelf[1][1] - 0.5, s=(10 ** 3.5) * scale_factor, c=colors[shelf[0] - 1],
-                       marker='o', alpha=0.5)
+            ax.scatter(shelf[1][0] - 0.5, shelf[1][1] - 0.5, s=(10 ** 3.5) * scale_factor,
+                       c=colors[(shelf[0] - 1) % len(colors)], marker='o', alpha=0.5)
             if scale_factor >= 0.5 and show_text:
                 ax.annotate(f'shelf {shelf[0]}', (shelf[1][0] - 0.62, shelf[1][1] - 0.53))
 
         if original_plans:
             for plan in list(zip(self.original_plans.keys(), self.original_plans.values())):
                 times, positions = self.calculate_plan_positions(plan[1], plan[0])
-                ax.plot(positions.T[0] - 0.5, positions.T[1] - 0.5, c=colors[plan[0] - 1], alpha=0.125,
+                ax.plot(positions.T[0] - 0.5, positions.T[1] - 0.5, c=colors[(plan[0] - 1) % len(colors)], alpha=0.125,
                         linewidth=5 * scale_factor,
                         marker='o')
 
         if plans:
             for plan in list(zip(plans.keys(), plans.values())):
                 times, positions = self.calculate_plan_positions(plan[1], plan[0])
-                ax.plot(positions.T[0] - 0.5, positions.T[1] - 0.5, c=colors[plan[0] - 1], alpha=0.25,
+                ax.plot(positions.T[0] - 0.5, positions.T[1] - 0.5, c=colors[(plan[0] - 1) % len(colors)], alpha=0.25,
                         linewidth=15 * scale_factor,
                         marker='o', markersize=15 * scale_factor)
 
@@ -338,6 +343,133 @@ class Benchmark:
             plt.show()
 
 
+class RandomBenchmark(Benchmark):
+    def __init__(self, size_x, size_y, n_robots, time_horizon=10, verbose=0, random_seed=None):
+        path = 'RANDOM BENCHMARK'
+        self.path = path
+        self.name = path.split('/')[-1]
+        # inits, robot_movements, instance = self.read_benchmark_files(path)
+
+        self.n_robots = n_robots
+
+        rand_size_map, rand_robots, rand_shelves = self.gen_benchmark_data(size_x, size_y, n_robots, random_seed=random_seed)
+        rand_plans = self.gen_simple_robot_plans(rand_robots, rand_shelves)
+        str_nodes, str_plans, str_robots, str_shelves = self.format_output(rand_size_map, rand_plans)
+
+        self.instance = '\n' + str_robots + '\n' + str_shelves + '\n' + str_nodes + '\n' + f'#const horizon={time_horizon}.'
+        self.plans_str_split = self.split_plans_str(str_plans)
+        inits, robot_movements = self.format_benchmark_files(self.instance, self.plans_str_split)
+
+        # initialise the dictionaries (self.robots and self.shelves) and the lists (self.nodes, self.highways)
+        self.robots, self.shelves, self.nodes, self.highways = self.format_benchmark_inits(inits)
+        # initialise the dictionary self.original_plans which contains the original plans movements
+        self.original_plans = self.format_benchmark_movements(robot_movements)
+
+        # Fill the original plans with [0,0] movements at the timesteps where there is not movement
+        self.original_plans = self.get_filled_plans(self.original_plans)
+
+        h = self.get_benchmark_horizon(self.instance)
+        if h == -1:
+            raise RuntimeError("Benchmark Format Error : The Benchmark hast to contain a time horizon in the form"
+                               "(#const horizon=[0>h].)")
+        self.horizon = h
+
+        if verbose:
+            print(f"nodes: {self.nodes}")
+            print(f"highways: {self.highways}")
+            print(f"shelves: {self.shelves}")
+            print(f"robots: {self.robots}")
+            print(f"original plans: {self.original_plans}")
+            self.plot()
+
+    @staticmethod
+    def split_plans_str(plans):
+        occurs = plans.split('\n')
+        plans = {}
+        for o in occurs:
+            robot_id = int(o.split('robot,')[1].split(')')[0])
+            if robot_id in plans:
+                plans[robot_id] += '\n' + o
+            else:
+                plans[robot_id] = o
+        return list(plans.values())
+
+    @staticmethod
+    def get_random_pos(max_x, max_y):
+        if max_x > 0 and max_y > 0:
+            return [np.random.randint(1, max_x + 1), np.random.randint(1, max_y + 1)]
+        else:
+            raise ValueError("max_x and max_y have to be greater than 0!")
+
+    @staticmethod
+    def gen_benchmark_data(size_x, size_y, n_robots, random_seed=None):
+        if size_x * size_y > n_robots * 2:
+            robot_pos = []
+            shelf_pos = []
+            if random_seed:
+                np.random.seed(random_seed)
+
+            for n in range(n_robots):
+                not_unique_pos = True
+                while not_unique_pos:
+                    r_pos = RandomBenchmark.get_random_pos(size_x, size_y)
+                    s_pos = RandomBenchmark.get_random_pos(size_x, size_y)
+                    if (r_pos not in robot_pos + shelf_pos) and (s_pos not in shelf_pos + robot_pos) and r_pos != s_pos:
+                        not_unique_pos = False
+                robot_pos.append(r_pos)
+                shelf_pos.append(s_pos)
+            return (size_x, size_y), robot_pos, shelf_pos
+        else:
+            raise ValueError(f"Your chosen Map size is too small to contain {n_robots} robots and shelves")
+
+    @staticmethod
+    def gen_simple_robot_plans(robot_pos, shelf_pos):
+        res = []
+        for pos in list(zip(robot_pos, shelf_pos)):
+            plan = []
+            d_x = pos[1][0] - pos[0][0]
+            d_y = pos[1][1] - pos[0][1]
+            if d_x != 0:
+                movements_x = list(range(np.sign(d_x), d_x + np.sign(d_x), np.sign(d_x)))
+            else:
+                movements_x = []
+            if d_y != 0:
+                movements_y = list(range(np.sign(d_y), d_y + np.sign(d_y), np.sign(d_y)))
+            else:
+                movements_y = []
+
+            shuffle = lambda x, y: [[x, y], [y, x]][np.random.randint(0, 1)]
+            shuffled_dirs = shuffle([[x, 0] for x in movements_x], [[0, y] for y in movements_y])
+            for m_1 in shuffled_dirs[0]:
+                plan.append(np.sign(np.array(m_1)))
+            for m_2 in shuffled_dirs[1]:
+                plan.append(np.sign(np.array(m_2)))
+
+            res.append([pos[0], pos[1], plan])
+
+        return res
+
+    @staticmethod
+    def format_output(size_map, plans):
+        nodes_str = []
+        plans_str = []
+        robots_str = []
+        shelves_str = []
+        i = 1
+        for x in range(size_map[0]):
+            for y in range(size_map[1]):
+                nodes_str.append(f'init(object(node,{i}),value(at,({x + 1},{y + 1}))).')
+                i += 1
+
+        for i, plan in enumerate(plans):
+            robots_str.append(f'init(object(robot,{i + 1}),value(at,({plan[0][0]},{plan[0][1]}))).')
+            shelves_str.append(f'init(object(shelf,{i + 1}),value(at,({plan[1][0]},{plan[1][1]}))).')
+            for t, pos in enumerate(plan[2]):
+                plans_str.append(f'occurs1(object(robot,{i + 1}),action(move,({pos[0]},{pos[1]})),{t + 1}).')
+
+        return '\n'.join(nodes_str), '\n'.join(plans_str), '\n'.join(robots_str), '\n'.join(shelves_str)
+
+
 class BenchmarkBinder:
 
     def __init__(self):
@@ -356,10 +488,10 @@ class BenchmarkBinder:
     def get_benchmarks(self):
         return self.benchmarks
 
-    def evaluate(self, plans):
+    def evaluate(self, merger_path, verbose=0):
         # TODO : implement the plan generation here also with time tracking for the calculation time and remove the
         #        actually unnecessary plans parameter
-        if len(plans) == len(self.benchmarks) > 0:
+        if os.path.isfile(merger_path) and merger_path.endswith('.lp') and self.benchmarks:
             # Remove all of the old plot images in the output/imgs folder
             image_list = [f for f in os.listdir('output/imgs') if f.endswith(".png")]
             for f in image_list:
@@ -371,20 +503,56 @@ class BenchmarkBinder:
             image_paths = []
             invalid_movement_list = []
             in_horizon_list = []
+            solving_times = []
+            plans = []
             for i, benchmark in enumerate(self.benchmarks):
                 print(benchmark.name)
-                _, conflicts, invalid_movements, max_t = benchmark.check_solution(plans[i])
-                conflict_list.append(conflicts)
-                name_list.append(benchmark.name)
-                path_list.append(benchmark.path)
-                invalid_movement_list.append(invalid_movements)
-                in_horizon_list.append(max_t <= benchmark.horizon)
-                image_path = f"output/imgs/b_{i}.png"
-                benchmark.plot(vertex_conflicts=conflicts['vertex_conflicts'], edge_conflicts=conflicts['edge_conflicts'],
-                               save_path=image_path, plans=plans[i])
-                image_paths.append(image_path)
 
-            self.output_html(conflict_list, name_list, path_list, image_paths, invalid_movement_list, in_horizon_list)
+                # All the Benchmarks in the binder are solved with clingo and the 'occurs' output is returned
+                try:
+                    print('start solving')
+                    plan, solving_time = ClingoSolver.solve(merger_path, benchmark)
+                    print('finished solving')
+                    plan_formatted = '.\n'.join(plan.split()) + "."
+                    plan_movements = Benchmark.read_movements_from_string(plan_formatted)
+
+                    if verbose:
+                        if isinstance(benchmark, RandomBenchmark):
+                            print("- INSTANCE [\n" + benchmark.instance + "\n]")
+                        print("- FINAL PLANS [\n" + plan_formatted + "\n]")
+
+                    _, conflicts, invalid_movements, max_t = benchmark.check_solution(plan_movements)
+                    solving_times.append(solving_time)
+                    conflict_list.append(conflicts)
+                    name_list.append(benchmark.name)
+                    path_list.append(benchmark.path)
+                    invalid_movement_list.append(invalid_movements)
+                    in_horizon_list.append(max_t <= benchmark.horizon)
+
+                    image_path = f"output/imgs/b_{i}.png"
+                    benchmark.plot(vertex_conflicts=conflicts['vertex_conflicts'],
+                                   edge_conflicts=conflicts['edge_conflicts'],
+                                   save_path=image_path, plans=plan_movements)
+                    image_paths.append(image_path)
+
+                except InvalidClingoOutputException:
+                    solving_times.append("NOT SOLVABLE OR ERROR OCCURED")
+                    conflicts = {
+                        "vertex_conflicts": [[0, np.array([0, 0])]],
+                        "edge_conflicts": [[0, np.array([0, 0]), np.array([0, 0])]]
+                    }
+                    conflict_list.append(conflicts)
+                    name_list.append(benchmark.name)
+                    path_list.append(benchmark.path)
+                    invalid_movement_list.append([[0, np.array([0,0])]])
+                    in_horizon_list.append(False)
+
+                    image_path = f"output/imgs/b_{i}.png"
+                    benchmark.plot(save_path=image_path)
+                    image_paths.append(image_path)
+
+            self.output_html(conflict_list, name_list, path_list, image_paths, invalid_movement_list, in_horizon_list,
+                             solving_times)
 
             html_file_path = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/output/out.html'
             self.open_html_file(html_file_path)
@@ -399,7 +567,7 @@ class BenchmarkBinder:
         webbrowser.open(url, new=2)
 
     @staticmethod
-    def output_html(results, names, paths, image_paths, invalid_movements, in_horizon):
+    def output_html(results, names, paths, image_paths, invalid_movements, in_horizon, solving_times):
         if len(results) == len(names) == len(paths) == len(image_paths) == len(invalid_movements) == len(in_horizon):
             f = open("html/quick.html", "r")
             quick = f.read()
@@ -450,6 +618,7 @@ class BenchmarkBinder:
                 benchmark_out = benchmark_out.replace('{{ INVALID MOVEMENTS }}', '\n'.join(ims))
                 benchmark_out = benchmark_out.replace('{{ NAME }}', names[result_index])
                 benchmark_out = benchmark_out.replace('{{ PATH }}', paths[result_index])
+                benchmark_out = benchmark_out.replace('{{ TIME }}', f"{solving_times[result_index]}s")
                 benchmark_out = benchmark_out.replace('{{ IN HORIZON }}', ['passed', 'not-passed'][int(not in_horizon[result_index])])
                 benchmark_out = benchmark_out.replace('{{ VC PASSED }}', ['passed', 'not-passed'][int(bool(vcs))])
                 benchmark_out = benchmark_out.replace('{{ EC PASSED }}', ['passed', 'not-passed'][int(bool(ecs))])
@@ -482,3 +651,48 @@ class BenchmarkBinder:
             f = open("output/out.html", "w")
             f.write(out_string)
             f.close()
+
+
+class InvalidClingoOutputException(Exception):
+    """Raised when the Clingo Solver cannot find either a valid or any model"""
+    pass
+
+
+class ClingoSolver(ABC):
+
+    @staticmethod
+    def solve(merger_path, benchmark):
+        f = open(merger_path, "r")
+        merger = f.read()
+        f.close()
+
+        try:
+            instance, plans = Benchmark.import_benchmark(benchmark.path)
+        except ValueError:
+            # TODO: check if benchmark is random benchmark (if and oly if):
+            instance = benchmark.instance
+            plans = benchmark.plans_str_split
+
+        ctl = clingo.Control()
+
+        full_benchmark_str = instance + "\n".join(plans) + "\n" + merger
+
+        ctl.add("base", [], full_benchmark_str)
+
+        res = ""
+
+        start = time.time()
+        ctl.ground([("base", [])])
+        solution = ctl.solve(yield_=True)
+        end = time.time()
+
+        with solution as handle:
+            # TODO : not pretty, might have to be changed in the future
+            for m in handle:
+                res = "{}".format(m)
+            handle.get()
+
+        if res:
+            return res, end - start
+        else:
+            raise InvalidClingoOutputException

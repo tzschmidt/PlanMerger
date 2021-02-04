@@ -53,6 +53,8 @@ init(object(order,2),value(line,(2,1))).
 init(object(order,3),value(pickingStation,1)).
 init(object(order,3),value(line,(3,1))).
 
+lock(object(robot,1)).
+#const horizon=10.
 occurs1(object(robot,1),action(move,(1,0)),1).
 occurs1(object(robot,1),action(move,(1,0)),2).
 occurs1(object(robot,1),action(move,(1,0)),3).

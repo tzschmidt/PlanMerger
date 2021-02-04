@@ -1,6 +1,7 @@
 # Approach 1
 
-Merger encodings do not include benchmarks and should be run with a fitting benchmark and horizon. Expects input plans in the form of occurs1(...). Identical Versions with different instances are noted with \_N.
+Merger encodings do not include benchmarks and should be run with a fitting benchmark and horizon. Expects input plans in the form of occurs1(...). Identical Versions with different instances are noted with \_N. Parameter #const horizon=10. needs to be set in the benchmarks or be taken into account in the command.
+benchmark.lp files in this directory are only for testing and will be removed later. For finished benchmarks check /instances/benchmarks/
 
 - **Version 1**
     + Generates possible movement delays at different moments in time, if collisions were detected
@@ -15,7 +16,10 @@ Merger encodings do not include benchmarks and should be run with a fitting benc
 - **Version 3**
     + adds edge constraints to V2
     + merged plans seem unintuitive due to randomness
-    + first tests on benchmark 2 successful
+    + benchmark tests successful
     + horizon moved to benchmarks
-    
+- **Version 4**
+    + additional features
+    + locking: lock(object(robot,R)) in the benchmark causes this robot not ot deviate from its orignial plan
+    + A-domain: merger can merge M- and A-domain plans
 

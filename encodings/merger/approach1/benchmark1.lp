@@ -1,3 +1,5 @@
+
+#const horizon =10.
 occurs1(object(robot,1),action(move,(0,-1)),1).
 occurs1(object(robot,1),action(move,(0,-1)),2).
 occurs1(object(robot,1),action(move,(0,-1)),3).

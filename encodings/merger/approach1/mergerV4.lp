@@ -19,11 +19,7 @@ position(R,(X,Y),T+1) :- position(R,(X,Y),T), occurs1(object(robot,R),action(pic
 position(R,(X,Y),T+1) :- position(R,(X,Y),T), occurs1(object(robot,R),action(putdown,()),T).
 position(R,(X,Y),T+1) :- position(R,(X,Y),T), occurs1(object(robot,R),action(deliver,_),T).
 
-% maybe needed
-% position(R,(X,Y),T2) :- position(R,(X,Y),T1), T2=T1-1, T2>=-L,T1<=0, tlimit(R,L).
-
 % determine availible time
-%tlimit(R,L) :- L = horizon - N,  N == #sum{1,T:occurs1(object(robot,R),action(move,(DX,DY)),T)}, robot(R). 
 tlimit(R,L) :- L = horizon - N,  N == #sum{1,T:occurs1(_,_,T)}, robot(R). 
 
 % generate wait times
@@ -40,16 +36,9 @@ dodget(R,0,0) :- robot(R).
 :- wait(R,T1,N1), wait(R,T2,N2), T1<T2, N1>N2.
 :- dodget(R,T1,N1), dodget(R,T2,N2), T1<T2, N1>N2.
 
-% moved to constraints, TODO remove after testing
-% remove exceeding timelimit
-%:- wait(R,T1,N1), dodget(R,T2,N2), tlimit(R,L), (N1+N2)>L, robot(R).
-% remove invalid direction
-%:- position(R,(X,Y),T), nulltime(T), dodgem(R,T,(DX,DY)), not node(X+DY,Y+DY). 
-
 % generate dodge move before dodge delay
 1{dodgem(R,T,(DX,DY)) : dir(DX,DY)}1 :- dodget(R,T,N1), dodget(R,T+1,N2), N1<N2, nulltime(T), robot(R).
 dodgem(R,T,(0,0)) :- dodget(R,T,N1), dodget(R,T+1,N2), N1>=N2, nulltime(T), robot(R).
-
 
 % get new positions
 newpos(R,(X,Y),0) :- robot(R), position(R,(X,Y),0).
@@ -70,7 +59,8 @@ newpos(R,(X,Y),T) :- newpos(R,(X,Y),T-1), not newpos(R,(X+1,Y),T), not newpos(R,
 % out of bounds
 :- newpos(R,(X,Y),T), robot(R), nulltime(T), not node(X,Y).
 % horizon
-:- newpos(R,(X1,Y1),horizon), robot(R), position(R,(X2,Y2),horizon), 1{X1!=X2; Y1!=Y2}1. 
+:- newpos(R,(X1,Y1),horizon), robot(R), position(R,(X2,Y2),horizon), X1!=X2.
+:- newpos(R,(X1,Y1),horizon), robot(R), position(R,(X2,Y2),horizon), Y1!=Y2.
 
 %############ ADDITIONAL FEATURES ######### 
 % locked robots can't change plan -> benchmark contains lock(object(robot,R)).

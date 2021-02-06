@@ -14,8 +14,14 @@ position(R,(X,Y),0) :- init(object(robot,R),value(at,(X,Y))).
 position(R,(X+DX,Y+DY),T+1) :- occurs1(object(robot,R),action(move,(DX,DY)),T+1), position(R,(X,Y),T).
 position(R,(X,Y),T2) :- position(R,(X,Y),T1), T2=T1+1, T2<=horizon, T1>=horizon-L, tlimit(R,L).
 
+%############ A-DOMAIN ####################
+position(R,(X,Y),T+1) :- position(R,(X,Y),T), occurs1(object(robot,R),action(pickup,()),T).
+position(R,(X,Y),T+1) :- position(R,(X,Y),T), occurs1(object(robot,R),action(putdown,()),T).
+position(R,(X,Y),T+1) :- position(R,(X,Y),T), occurs1(object(robot,R),action(deliver,_),T).
+
+
 % determine availible time
-tlimit(R,L) :- L = horizon - N,  N == #sum{1,T:occurs1(_,_,T)}, robot(R). 
+tlimit(R,L) :- L = horizon - N,  N == #sum{1,T:occurs1(object(robot,R),_,T)}, robot(R). 
 
 % generate wait times
 count(R,0..L) :- tlimit(R,L).
@@ -46,6 +52,13 @@ newpos(R,(X,Y),T+W1+W2+2) :- robot(R), position(R,(X,Y),T), nulltime(T), wait(R,
 % fill pos
 newpos(R,(X,Y),T) :- newpos(R,(X,Y),T-1), not newpos(R,(X+1,Y),T), not newpos(R,(X-1,Y),T), not newpos(R,(X,Y+1),T), not newpos(R,(X,Y-1),T), robot(R), nulltime(T).
 
+% when is a roboter carrying a shelf
+pickup(R,0,0) :- robot(R).
+pickup(R,T1,N+1) :- occurs1(object(robot,R),action(pickup,()),T1), pickup(R,T2,N), T1>T2.
+putdown(R,0,0) :- robot(R).
+putdown(R,T1,N+1) :- occurs1(object(robot,R),action(putdown,()),T1), putdown(R,T2,N), T1>T2.
+carry(R,T1+W1+W2,T2+W3+W4) :- pickup(R,T1,N), putdown(R,T2,N), robot(R), wait(R,T1,W1), dodget(R,T1,W2), wait(R,T2,W3), dodget(R,T2,W4), N!=0. 
+
 %############# CONSTRAINTS ################
 % vertex constraint 
 :- newpos(R1,(X,Y),T), newpos(R2,(X,Y),T), nulltime(T), robot(R1), robot(R2), R1!=R2.
@@ -57,16 +70,27 @@ newpos(R,(X,Y),T) :- newpos(R,(X,Y),T-1), not newpos(R,(X+1,Y),T), not newpos(R,
 :- newpos(R,(X1,Y1),horizon), robot(R), position(R,(X2,Y2),horizon), X1!=X2.
 :- newpos(R,(X1,Y1),horizon), robot(R), position(R,(X2,Y2),horizon), Y1!=Y2.
 
-%############ ADDITIONAL FEATURES ######### 
+% cant move with shelf through shelf
+% easy solution may lead to no plan (dont dodge while carrying shelf)
+:- dodgem(R,T,_), robot(R), nulltime(T), carry(R,T1,T2), T1<=T, T<=T2.
+% better solution requieres positions of all shelves at all times
+
+%############ ADDITIONAL FEATURES #########
 % maybe improve performance by moving before generation 
 % locked robots can't change plan -> benchmark contains lock(object(robot,R)).
 %:- wait(R,T,N1), dodget(R,T,N2), nulltime(T), lock(object(robot,R)), 1{N1=0; N2=0}1.
 :- wait(R,horizon,N1), lock(object(robot,R)), robot(R), N1!=0.
 :- dodget(R,horizon,N2), lock(object(robot,R)), robot(R), N2!=0.
 
+
 %############ OUTPUT ###################### 
 % transform new positions into output
 occurs(object(robot,R),action(move,(DX,DY)),T) :- time(T), newpos(R,(X1,Y1),T), newpos(R,(X2,Y2),T-1), DX=X1-X2, DY=Y1-Y2, 1{X1!=X2; Y1!=Y2}1.
+
+%############ A-DOMAIN ####################
+occurs(object(robot,R),action(pickup,()),T+W1+W2) :- time(T), occurs1(object(robot,R), action(pickup,()),T), wait(R,T,W1), dodget(R,T,W2).
+occurs(object(robot,R),action(putdown,()),T+W1+W2) :- time(T), occurs1(object(robot,R), action(putdown,()),T), wait(R,T,W1), dodget(R,T,W2).
+occurs(object(robot,R),action(deliver,D),T+W1+W2) :- time(T), occurs1(object(robot,R), action(deliver,D),T), wait(R,T,W1), dodget(R,T,W2).
 
 
 %#show check/1.
@@ -79,4 +103,9 @@ occurs(object(robot,R),action(move,(DX,DY)),T) :- time(T), newpos(R,(X1,Y1),T), 
 %#show dodgem/3.
 %#show newpos/3.
 %#show position/3.
+%#show lock/1.
+%#show carry/3.
+%#show pickup/3.
+%#show putdown/3.
 #show occurs/3.
+

@@ -21,5 +21,7 @@ benchmark.lp files in this directory are only for testing and will be removed la
 - **Version 4**
     + additional features
     + locking: lock(object(robot,R)) in the benchmark causes this robot not ot deviate from its orignial plan
+    + TODO A-domain: merger can merge M- and A-domain plans
+- **Version 5**
     + A-domain: merger can merge M- and A-domain plans
 

@@ -1,5 +1,3 @@
-
-#const horizon=10.
 time(1..horizon).
 
 % not needed atm

@@ -28,14 +28,8 @@ init(object(highway, 17), value(at, (2, 4))).
 init(object(highway, 19), value(at, (4, 4))).
 init(object(highway, 9), value(at, (4, 2))).
 init(object(robot,1), value(at,(1,3))).
-init(object(robot,1), value(max_energy,0)).
-init(object(robot,1), value(energy,0)).
 init(object(robot,2), value(at,(3,1))).
-init(object(robot,2), value(max_energy,0)).
-init(object(robot,2), value(energy,0)).
 init(object(robot,3), value(at,(5,3))).
-init(object(robot,3), value(max_energy,0)).
-init(object(robot,3), value(energy,0)).
 init(object(shelf,1), value(at,(5,3))).
 init(object(product,1),value(on,(1,1))).
 init(object(shelf,2), value(at,(3,5))).

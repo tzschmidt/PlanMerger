@@ -1,0 +1,554 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Benchmark Results</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        html{
+    scroll-behavior: smooth;
+}
+body{
+    margin: 0;
+    background-color: #263238;
+    font-family: 'Open Sans', sans-serif;
+}
+
+.main{
+    width: 50vw;
+    margin: 3vw auto;
+    min-height: 85vh;
+    background-color: #fff;
+    box-shadow: 0 0.25vw 2vw rgba(0,0,0,0.5);
+    overflow: hidden;
+}
+
+h1{
+    margin: 0;
+    padding: 2vw;
+    font-weight: 400;
+    color: #fff;
+    background-color: #607D8B;
+    font-size: 1.75vw;
+}
+
+.benchmark{
+    margin: 2vw;
+    border: solid 0.15vw #78909C;
+    min-height: 10vw;
+    position: relative;
+}
+
+.benchmark h2{
+    margin: 0;
+    padding: 1vw 2vw 0 2vw;
+    font-size: 1.3vw;
+}
+
+.benchmark h6{
+    margin: 0;
+    padding: 0 2vw 0 2vw;
+    color: #B0BEC5;
+    font-size: 0.60vw;
+    font-weight: 400;
+}
+
+.benchmark h4.outcome{
+    position: absolute;
+    right: 0;
+    top: 0;
+    margin: 1vw 2vw;
+    padding: 1vw;
+    color: #fff;
+    font-size: 0.85vw;
+}
+
+.passed{
+    background-color: #7CB342;
+}
+
+.not-passed{
+    background-color: #F44336;
+}
+
+/*--- QUICK LIST */
+
+.main ul.quick{
+    padding: 2vw;
+    padding-bottom: 1vw;
+    margin: 0;
+    list-style-type: none;
+}
+
+.main ul.quick li a{
+    width: 3vw; 
+    height: 3vw;
+    float: left;
+    margin: 0;
+    margin-right: 1vw;
+    font-size: 1vw;
+    font-weight: 600;
+    text-align: center;
+    line-height: 3vw;
+    border-radius: 50%;
+    color: #fff;
+    text-decoration: none;
+    opacity: 0.7;
+    transition: 200ms;
+}
+
+.main ul.quick li a:hover{
+    opacity: 1;
+}
+
+/*--- POSITION */  
+.pos{
+    position: relative;
+    background-color: #fff;
+    float: left;
+    padding: 0.55vw 1vw;
+    margin-right: 1vw;
+    border-radius: 0.25vw;
+    box-shadow: 0 0.15vw 0.5vw rgba(0,0,0,0.25);
+}
+
+.pos .coord{
+    background-color: #CFD8DC;
+    padding: 0 0.25vw;
+    border-radius: 0.125vw;
+}
+
+.pos .time{
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin-top: -0.75vw;
+    margin-right: -0.75vw;
+    background-color: #455A64;
+    height: 1.75vw;
+    width: 1.75vw;
+    line-height: 1.75vw;
+    text-align: center;
+    border-radius: 50%;
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 0.15vw 0.5vw rgba(0,0,0,0.25);
+}
+
+/*--- CONFLICTS */  
+
+.conflicts{
+    margin: 1vw 2vw;
+    background-color: #B0BEC5;
+    position: relative;
+}
+
+.conflicts h3{
+    margin: 0;
+    font-size: 1.05vw;
+    padding: 1vw;
+    background-color: #CFD8DC;
+    font-weight: 600;
+}
+
+.conflicts ul{
+    list-style-type: none;
+    padding: 1vw;
+}
+
+.conflicts ul li{
+    float: left;
+}
+
+.conflicts .indicator{
+    width: 1.5vw;
+    height: 1.5vw;
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 0.95vw;
+    border-radius: 50%;
+    border: solid 0.15vw #fff;
+}
+
+/*--- IMAGE */
+
+.image{
+    height: 30vw;
+    margin: 1vw 2vw;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: solid 0.15vw #CFD8DC;
+    transition: 200ms;
+}
+
+.image:hover{
+    opacity: 0.7;
+    border-color: #263238;
+}
+
+/*--- TOP BUTTON */
+.top-button{
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    text-decoration: none;
+    margin: 2vw;
+    padding: 2vw;
+    color: #263238;
+    background-color: #CFD8DC;
+    opacity: 0.7;
+    transition: 200ms;
+    font-size: 1vw;
+}
+
+.top-button:hover{
+    opacity: 1;
+}
+
+#start{
+    position: absolute;
+    top: 0;
+}
+    </style>
+</head>
+<body>
+    <div id="start"></div>
+    <div class="main">
+        <h1>Benchmark Test Results</h1>
+        <ul class="quick">
+            <li><a class="passed" href="#b1">1</a></li>
+<li><a class="passed" href="#b2">2</a></li>
+<li><a class="passed" href="#b3">3</a></li>
+<li><a class="passed" href="#b4">4</a></li>
+<li><a class="passed" href="#b5">5</a></li>
+<li><a class="passed" href="#b6">6</a></li>
+<li><a class="passed" href="#b7">7</a></li>
+<li><a class="passed" href="#b8">8</a></li>
+        </ul>
+        <br>
+        <div class="benchmark" id="b1">
+    <h2>1_vertex_constraint_benchmark [Level 1]</h2>
+    <h6>/home/hannes/Programming/PlanMerger/instances/benchmarks/1_vertex_constraint_benchmark [Level 1]</h6>
+    <h4 class="outcome passed">passed</h4>
+    <div class="conflicts">
+        <h3>Computation Time : <span style="opacity: 0.5">0.0239410400390625s</span></h3>
+    </div>
+    <div class="conflicts">
+        <h3>Solution In Time Horizon :</h3>
+        <div class="indicator passed"></div>
+    </div>
+    <div class="conflicts">
+        <h3>Vertex Conflicts :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+
+    <div class="conflicts">
+        <h3>Edge Conflicts :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+    
+    <div class="conflicts">
+        <h3>Invalid Movements :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+
+    <a href='imgs/b_0.png' target="_blank"><div class="image" style="background-image: url(imgs/b_0.png)"> </div></a>
+</div>
+<div class="benchmark" id="b2">
+    <h2>2_edge_constraint_benchmark [Level 1]</h2>
+    <h6>/home/hannes/Programming/PlanMerger/instances/benchmarks/2_edge_constraint_benchmark [Level 1]</h6>
+    <h4 class="outcome passed">passed</h4>
+    <div class="conflicts">
+        <h3>Computation Time : <span style="opacity: 0.5">0.027124881744384766s</span></h3>
+    </div>
+    <div class="conflicts">
+        <h3>Solution In Time Horizon :</h3>
+        <div class="indicator passed"></div>
+    </div>
+    <div class="conflicts">
+        <h3>Vertex Conflicts :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+
+    <div class="conflicts">
+        <h3>Edge Conflicts :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+    
+    <div class="conflicts">
+        <h3>Invalid Movements :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+
+    <a href='imgs/b_1.png' target="_blank"><div class="image" style="background-image: url(imgs/b_1.png)"> </div></a>
+</div>
+<div class="benchmark" id="b3">
+    <h2>3_multi_robot_vertex_constraint_benchmark [Level 3]</h2>
+    <h6>/home/hannes/Programming/PlanMerger/instances/benchmarks/3_multi_robot_vertex_constraint_benchmark [Level 3]</h6>
+    <h4 class="outcome passed">passed</h4>
+    <div class="conflicts">
+        <h3>Computation Time : <span style="opacity: 0.5">0.051732778549194336s</span></h3>
+    </div>
+    <div class="conflicts">
+        <h3>Solution In Time Horizon :</h3>
+        <div class="indicator passed"></div>
+    </div>
+    <div class="conflicts">
+        <h3>Vertex Conflicts :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+
+    <div class="conflicts">
+        <h3>Edge Conflicts :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+    
+    <div class="conflicts">
+        <h3>Invalid Movements :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+
+    <a href='imgs/b_2.png' target="_blank"><div class="image" style="background-image: url(imgs/b_2.png)"> </div></a>
+</div>
+<div class="benchmark" id="b4">
+    <h2>4_multi_robot_edge_constraint_benchmark [Level 3]</h2>
+    <h6>/home/hannes/Programming/PlanMerger/instances/benchmarks/4_multi_robot_edge_constraint_benchmark [Level 3]</h6>
+    <h4 class="outcome passed">passed</h4>
+    <div class="conflicts">
+        <h3>Computation Time : <span style="opacity: 0.5">0.04722857475280762s</span></h3>
+    </div>
+    <div class="conflicts">
+        <h3>Solution In Time Horizon :</h3>
+        <div class="indicator passed"></div>
+    </div>
+    <div class="conflicts">
+        <h3>Vertex Conflicts :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+
+    <div class="conflicts">
+        <h3>Edge Conflicts :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+    
+    <div class="conflicts">
+        <h3>Invalid Movements :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+
+    <a href='imgs/b_3.png' target="_blank"><div class="image" style="background-image: url(imgs/b_3.png)"> </div></a>
+</div>
+<div class="benchmark" id="b5">
+    <h2>5_multi_robot_conflict_through_waiting [Level 2]</h2>
+    <h6>/home/hannes/Programming/PlanMerger/instances/benchmarks/5_multi_robot_conflict_through_waiting [Level 2]</h6>
+    <h4 class="outcome passed">passed</h4>
+    <div class="conflicts">
+        <h3>Computation Time : <span style="opacity: 0.5">0.027454853057861328s</span></h3>
+    </div>
+    <div class="conflicts">
+        <h3>Solution In Time Horizon :</h3>
+        <div class="indicator passed"></div>
+    </div>
+    <div class="conflicts">
+        <h3>Vertex Conflicts :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+
+    <div class="conflicts">
+        <h3>Edge Conflicts :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+    
+    <div class="conflicts">
+        <h3>Invalid Movements :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+
+    <a href='imgs/b_4.png' target="_blank"><div class="image" style="background-image: url(imgs/b_4.png)"> </div></a>
+</div>
+<div class="benchmark" id="b6">
+    <h2>6_long_vertex_conflict [Level 2]</h2>
+    <h6>/home/hannes/Programming/PlanMerger/instances/benchmarks/6_long_vertex_conflict [Level 2]</h6>
+    <h4 class="outcome passed">passed</h4>
+    <div class="conflicts">
+        <h3>Computation Time : <span style="opacity: 0.5">0.027100801467895508s</span></h3>
+    </div>
+    <div class="conflicts">
+        <h3>Solution In Time Horizon :</h3>
+        <div class="indicator passed"></div>
+    </div>
+    <div class="conflicts">
+        <h3>Vertex Conflicts :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+
+    <div class="conflicts">
+        <h3>Edge Conflicts :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+    
+    <div class="conflicts">
+        <h3>Invalid Movements :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+
+    <a href='imgs/b_5.png' target="_blank"><div class="image" style="background-image: url(imgs/b_5.png)"> </div></a>
+</div>
+<div class="benchmark" id="b7">
+    <h2>RANDOM BENCHMARK</h2>
+    <h6>RANDOM BENCHMARK</h6>
+    <h4 class="outcome passed">passed</h4>
+    <div class="conflicts">
+        <h3>Computation Time : <span style="opacity: 0.5">0.14167284965515137s</span></h3>
+    </div>
+    <div class="conflicts">
+        <h3>Solution In Time Horizon :</h3>
+        <div class="indicator passed"></div>
+    </div>
+    <div class="conflicts">
+        <h3>Vertex Conflicts :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+
+    <div class="conflicts">
+        <h3>Edge Conflicts :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+    
+    <div class="conflicts">
+        <h3>Invalid Movements :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+
+    <a href='imgs/b_6.png' target="_blank"><div class="image" style="background-image: url(imgs/b_6.png)"> </div></a>
+</div>
+<div class="benchmark" id="b8">
+    <h2>RANDOM BENCHMARK</h2>
+    <h6>RANDOM BENCHMARK</h6>
+    <h4 class="outcome passed">passed</h4>
+    <div class="conflicts">
+        <h3>Computation Time : <span style="opacity: 0.5">2.5874123573303223s</span></h3>
+    </div>
+    <div class="conflicts">
+        <h3>Solution In Time Horizon :</h3>
+        <div class="indicator passed"></div>
+    </div>
+    <div class="conflicts">
+        <h3>Vertex Conflicts :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+
+    <div class="conflicts">
+        <h3>Edge Conflicts :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+    
+    <div class="conflicts">
+        <h3>Invalid Movements :</h3>
+        <div class="indicator passed"></div>
+        <ul>
+            
+        </ul>
+        <br>
+    </div>
+
+    <a href='imgs/b_7.png' target="_blank"><div class="image" style="background-image: url(imgs/b_7.png)"> </div></a>
+</div>
+    </div>
+    <a href="#start" class="top-button">Back to Top</a>
+</body>
+</html>

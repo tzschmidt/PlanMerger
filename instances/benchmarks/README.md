@@ -26,3 +26,7 @@ Each Benchmark has a Level assigned to it which indicates the difficulty of the 
 5. **Conflict through waiting [Multi Robot] [Level 2]** - ![#f03c15](https://via.placeholder.com/15/FBC02D/000000?text=+)
    + A Plan Merger that chooses to avoid vertex conflicts through waiting can create new Vertex and Edge Conflicts that weren't there before. This Benchmark deals with this problem.
 
+## Benchmarks of other groups
+
++ Benchmarks 07 - 12 Source: [mapf-project](https://github.com/NikKaem/mapf-project)
++ Benchmarks 13 - 19 Source: [ProjektMAPF](https://github.com/Zard0c/ProjektMAPF)

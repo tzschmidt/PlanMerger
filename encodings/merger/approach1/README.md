@@ -1,6 +1,6 @@
 # Approach 1
 
-Merger encodings do not include benchmarks and should be run with a fitting benchmark and horizon. Expects input plans in the form of occurs1(...). Identical Versions with different instances are noted with \_N. Parameter #const horizon=10. needs to be set in the benchmarks or be taken into account in the command.
+Merger encodings do not include benchmarks and should be run with a fitting benchmark and horizon. Expects input plans in the form of occurs1(...). Identical Versions with different instances are noted with \_N. Parameter "#const horizon=10." needs to be set in the benchmarks or be taken into account in the command. For A-domain benchmarks "adomain." must be set in the benchmark. 
 benchmark.lp files in this directory are only for testing and will be removed later. For finished benchmarks check /instances/benchmarks/
 
 - **Version 1**
@@ -24,4 +24,6 @@ benchmark.lp files in this directory are only for testing and will be removed la
     + TODO A-domain: merger can merge M- and A-domain plans
 - **Version 5**
     + A-domain: merger can merge M- and A-domain plans
+    + multiple robots are not allowed to access the same shelf in their original plans
+    + benchmarks must contain "adomain." 
 

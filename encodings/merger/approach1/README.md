@@ -20,10 +20,14 @@ Merger encodings do not include benchmarks and should be run with a fitting benc
     + horizon moved to benchmarks
 - **Version 4**
     + additional features
-    + locking: lock(object(robot,R)) in the benchmark causes this robot not to deviate from its original plan
-    + TODO : A-domain: merger can merge M- and A-domain plans
-- **Version 5**
+    + locking: lock(object(robot,R)) in the benchmark causes this robot not ot deviate from its orignial plan
+    + TODO A-domain: merger can merge M- and A-domain plans
+
+**A-Domain**
+- **Version 1**
     + A-domain: merger can merge M- and A-domain plans
+    + multiple robots are not allowed to access the same shelf in their original plans
+    + benchmarks must contain "adomain." 
 
 
 

@@ -22,12 +22,14 @@ prepos(R,C,T+1) :- prepos(R,C,T), occurs1(object(robot,R),action(putdown,()),T+1
 prepos(R,C,T+1) :- prepos(R,C,T), occurs1(object(robot,R),action(deliver,_),T+1).
 
 % get times for pickup and delivery
-prepickup(R,0,0) :- robot(R).
-prepickup(R,T1,N+1) :- occurs1(object(robot,R),action(pickup,()),T1), prepickup(R,T2,N), T1>T2.
-predeliver(R,0,0,0) :- robot(R).
-predeliver(R,T1,D,N+1) :- occurs1(object(robot,R),action(deliver,D),T1), predeliver(R,T2,_,N), T1>T2.
+prepickuphelp(R,0,0) :- robot(R).
+prepickuphelp(R,T1,N) :- occurs1(object(robot,R),action(pickup,()),T1), prepickuphelp(R,T2,N-1), T1>T2.
+prepickup(R,T,N) :- prepickuphelp(R,T,N), not prepickuphelp(R,T,N+1).
+predeliverhelp(R,0,0,0) :- robot(R).
+predeliverhelp(R,T1,D,N+1) :- occurs1(object(robot,R),action(deliver,D),T1), predeliverhelp(R,T2,_,N), T1>T2.
+predeliver(R,T,D,N) :- predeliverhelp(R,T,D,N), not predeliverhelp(R,T,_,N+1).
 
-% edit plan
+% edit plan %TODO: only edit if pickup!=putdown
 % copy path from pickup to delivery, remember delivery time for future step
 reppos(R,C,T,T2) :- prepos(R,C,T), prepickup(R,T1,N), predeliver(R,T2,_,N), T1<=T, T<T2, N!=0.
 % calculate extra time needed
@@ -119,7 +121,6 @@ carry(R,T1+W1+W2,T2+W3+W4) :- pickup(R,T1,N), putdown(R,T2,N), robot(R), wait(R,
 %############ ADDITIONAL FEATURES #########
 % maybe improve performance by moving before generation 
 % locked robots can't change plan -> benchmark contains lock(object(robot,R)).
-%:- wait(R,T,N1), dodget(R,T,N2), nulltime(T), lock(object(robot,R)), 1{N1=0; N2=0}1.
 :- wait(R,horizon,N1), lock(object(robot,R)), robot(R), N1!=0.
 :- dodget(R,horizon,N2), lock(object(robot,R)), robot(R), N2!=0.
 
@@ -146,6 +147,9 @@ occurs(object(robot,R),action(deliver,D),T+W1+W2) :- time(T), deliver(R,T,D,N), 
 %#show prepos/3.
 %#show position/3.
 %#show tdiff/4.
+%#show tdifft/3.
+%#show prepickup/3.
+%#show predeliver/4.
 %#show prepos/3.
 %#show lock/1.
 %#show carry/3.

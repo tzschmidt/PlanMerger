@@ -37,7 +37,7 @@ reppos(R,C,T,T2) :- prepos(R,C,T), prepickup(R,T1,N), predeliver(R,T2,_,N), T1<=
 tdiff(R,2*(T2-T1),T2,N) :- prepickup(R,T1,N), predeliver(R,T2,_,N), N!=0.
 % at time T
 tdifft(R,0,0) :- robot(R).
-tdifft(R,T,TA) :- robot(R), time(T), TA == #sum{T1,x:tdiff(R,T1,T2,_), T2<=T}.
+tdifft(R,T,TA) :- robot(R), time(T), TA = #sum{T1,T2:tdiff(R,T1,T2,_), T2<=T}.
 
 % add copied path
 % D->P
@@ -46,22 +46,23 @@ position(R,C,T+(T1-T)*2-1+TA) :- reppos(R,C,T,T1), tdifft(R,T,TA).
 % TODO: last step unnecessary, remnant of orginal deliver
 position(R,C,T+TD+TA) :- reppos(R,C,T,T1), tdiff(R,TD,T1,_), tdifft(R,T,TA).
 % adjust old plan
-position(R,C,T+TA) :- prepos(R,C,T), tdifft(R,T,TA). 
+position(R,C,T+TA) :- prepos(R,C,T), tdifft(R,T,TA).
+pt(C,T+TA) :- prepos(2,C,T), tdifft(2,T,TA).
 
 % adjust actions
-pickup(R,0,0) :- robot(R).
-pickup(R,T+TA,N) :- tdifft(R,T,TA), prepickup(R,T,N), N!=0.
+pickup(R,0,0,0) :- robot(R).
+pickup(R,T+TA,S,N) :- tdifft(R,T,TA), prepickup(R,T,N), position(R,C,T+TA), shelf(S,C,0), N!=0.
 deliver(R,0,0,0) :- robot(R).
 deliver(R,T+TA,D,N) :- tdifft(R,T-1,TA), predeliver(R,T,D,N), N!=0.
 putdown(R,0,0) :- robot(R).
-putdown(R,T1+2*(T2-T1),N) :- pickup(R,T1,N), deliver(R,T2,_,N), N!=0.
+putdown(R,T1+2*(T2-T1),N) :- pickup(R,T1,S,N), deliver(R,T2,_,N), N!=0.
 
 %############# MOVE GENERATOR #############
 % determine availible time for needed domain
-tlimit(R,L) :- L = horizon-N,  N == #sum{1,T:occurs1(object(robot,R),_,T)}, robot(R), not adomain. 
+tlimit(R,L) :- L = horizon-N,  N = #sum{1,T:occurs1(object(robot,R),_,T)}, robot(R), not adomain. 
 % moving athelp into line below doesnt work???
 athelp(R,TD/2) :- tdiff(R,TD,_,N), not tdiff(R,_,_,N+1), adomain.
-tlimit(R,L) :- L = horizon-N-TA+TH,  N == #sum{1,T:occurs1(object(robot,R),_,T)}, tdifft(R,horizon,TA), athelp(R,TH), robot(R), adomain. 
+tlimit(R,L) :- L = horizon-N-TA+TH,  N = #sum{1,T:occurs1(object(robot,R),_,T)}, tdifft(R,horizon,TA), athelp(R,TH), robot(R), adomain. 
 
 % generate wait times
 count(R,0..L) :- tlimit(R,L).
@@ -95,7 +96,9 @@ newpos(R,(X,Y),T) :- newpos(R,(X,Y),T-1), not newpos(R,(X+1,Y),T), not newpos(R,
 % see shelf constraint
 %shelf(S,C,T+W1+W2) :- shelf(S,C,T+W1+W2-1), not pickup(R,T-1,_,S), robot(R), wait(R,T,W1), dodget(R,T,W2).
 %shelf(S,C,T+W1+W2) :- shelf(S,C,0), putdown(R,T-1,_,S), robot(R), wait(R,T,W1), dodget(R,T,W2).
-carry(R,T1+W1+W2,T2+W3+W4) :- pickup(R,T1,N), putdown(R,T2,N), robot(R), wait(R,T1,W1), dodget(R,T1,W2), wait(R,T2,W3), dodget(R,T2,W4), N!=0. 
+newpickup(R,T+W1+W2,S,N) :- time(T), pickup(R,T,S,N), wait(R,T,W1), dodget(R,T,W2), N>0.
+newputdown(R,T+W1+W2,N) :- time(T), putdown(R,T,N), wait(R,T,W1), dodget(R,T,W2), N>0.
+carry(R,T1,T2,S) :- newpickup(R,T1,S,N), newputdown(R,T2,N), robot(R), N!=0. 
 
 %############# CONSTRAINTS ################
 % vertex constraint 
@@ -116,7 +119,8 @@ carry(R,T1+W1+W2,T2+W3+W4) :- pickup(R,T1,N), putdown(R,T2,N), robot(R), wait(R,
 % cant dodge into original shelf position, regardless of whether there actually is a shelf or not
 % TODO: improve 
 %:- newpos(R,(X,Y),T), robot(R), nulltime(T), shelf(S,(X,Y),0), carry(R,T1,T2), T1<=T, T<=T2.
-:- carry(R,T1,T2), T1<=T, T<=T2, shelf(S,(X+DX,Y+DY),0), robot(R), position(R,(X,Y),T), nulltime(T), wait(R,T,W1), dodget(R,T,W2), dodgem(R,T,(DX,DY)), 1{DX!=0; DY!=0}1.
+:- carry(R,T1,T2,S), T1<=T, T<=T2, shelf(_,(X+DX,Y+DY),0), robot(R), position(R,(X,Y),T), nulltime(T), wait(R,T,W1), dodget(R,T,W2), dodgem(R,T,(DX,DY)), 1{DX!=0; DY!=0}1.
+:- newpickup(R1,T,S,N), carry(R2,T1,T2,S), T1<=T, T<=T2, time(T), R1!=R2.
 
 %############ ADDITIONAL FEATURES #########
 % maybe improve performance by moving before generation 
@@ -130,7 +134,7 @@ carry(R,T1+W1+W2,T2+W3+W4) :- pickup(R,T1,N), putdown(R,T2,N), robot(R), wait(R,
 occurs(object(robot,R),action(move,(DX,DY)),T) :- time(T), newpos(R,(X1,Y1),T), newpos(R,(X2,Y2),T-1), DX=X1-X2, DY=Y1-Y2, 1{X1!=X2; Y1!=Y2}1.
 
 %############ A-DOMAIN ####################
-occurs(object(robot,R),action(pickup,()),T+W1+W2) :- time(T), pickup(R,T,N), wait(R,T,W1), dodget(R,T,W2), N>0.
+occurs(object(robot,R),action(pickup,()),T+W1+W2) :- time(T), pickup(R,T,S,N), wait(R,T,W1), dodget(R,T,W2), N>0.
 occurs(object(robot,R),action(putdown,()),T+W1+W2) :- time(T), putdown(R,T,N), wait(R,T,W1), dodget(R,T,W2), N>0.
 occurs(object(robot,R),action(deliver,D),T+W1+W2) :- time(T), deliver(R,T,D,N), wait(R,T,W1), dodget(R,T,W2), N>0.
 
@@ -150,10 +154,10 @@ occurs(object(robot,R),action(deliver,D),T+W1+W2) :- time(T), deliver(R,T,D,N), 
 %#show tdifft/3.
 %#show prepickup/3.
 %#show predeliver/4.
-%#show prepos/3.
+%#show reppos/4.
 %#show lock/1.
-%#show carry/3.
-%#show pickup/3.
+%#show carry/4.
+%#show pickup/4.
 %#show putdown/3.
 %#show deliver/4.
 #show occurs/3.

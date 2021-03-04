@@ -9,6 +9,7 @@ dir(1,0). dir(-1,0). dir(0,1). dir(0,-1).
 robot(R) :- init(object(robot,R),value(at,(X,Y))).
 node(X,Y) :- init(object(node,N),value(at,(X,Y))).
 
+%############# PREPATORY WORK #############
 % get roboter positions
 position(R,(X,Y),0) :- init(object(robot,R),value(at,(X,Y))).
 position(R,(X+DX,Y+DY),T+1) :- occurs1(object(robot,R),action(move,(DX,DY)),T+1), position(R,(X,Y),T).
@@ -31,7 +32,7 @@ dodget(R,0,0) :- robot(R).
 :- wait(R,T1,N1), wait(R,T2,N2), T1<T2, N1>N2.
 :- dodget(R,T1,N1), dodget(R,T2,N2), T1<T2, N1>N2.
 
-% generate dodge move before dodge delay
+% rise in dodget means a dodge happend -> generate dodge move before dodge delay
 1{dodgem(R,T,(DX,DY)) : dir(DX,DY)}1 :- dodget(R,T,N1), dodget(R,T+1,N2), N1<N2, nulltime(T), robot(R).
 dodgem(R,T,(0,0)) :- dodget(R,T,N1), dodget(R,T+1,N2), N1>=N2, nulltime(T), robot(R).
 
@@ -43,7 +44,7 @@ newpos(R,(X,Y),T+W1+W2) :- robot(R), position(R,(X,Y),T), nulltime(T), wait(R,T,
 newpos(R,(X+DX,Y+DY),T+W1+W2+1) :- robot(R), position(R,(X,Y),T), nulltime(T), wait(R,T,W1), dodget(R,T,W2), dodgem(R,T,(DX,DY)), 1{DX!=0; DY!=0}1.
 newpos(R,(X,Y),T+W1+W2+2) :- robot(R), position(R,(X,Y),T), nulltime(T), wait(R,T,W1), dodget(R,T,W2), dodgem(R,T,(DX,DY)), 1{DX!=0; DY!=0}1.
 
-% fill pos
+% fill posistions
 newpos(R,(X,Y),T) :- newpos(R,(X,Y),T-1), not newpos(R,(X+1,Y),T), not newpos(R,(X-1,Y),T), not newpos(R,(X,Y+1),T), not newpos(R,(X,Y-1),T), robot(R), nulltime(T).
 
 %############# CONSTRAINTS ################
@@ -58,7 +59,7 @@ newpos(R,(X,Y),T) :- newpos(R,(X,Y),T-1), not newpos(R,(X+1,Y),T), not newpos(R,
 :- newpos(R,(X1,Y1),horizon), robot(R), position(R,(X2,Y2),horizon), Y1!=Y2.
 
 %############ ADDITIONAL FEATURES ######### 
-% maybe improve performance by moving before generation 
+% possible improvement: move before generation 
 % locked robots can't change plan -> benchmark contains lock(object(robot,R)).
 %:- wait(R,T,N1), dodget(R,T,N2), nulltime(T), lock(object(robot,R)), 1{N1=0; N2=0}1.
 :- wait(R,horizon,N1), lock(object(robot,R)), robot(R), N1!=0.

@@ -16,17 +16,17 @@ init(object(node, 12), value(at, (6, 2))).
 init(object(node, 7), value(at, (1, 2))).
 init(object(highway, 17), value(at, (5, 3))).
 init(object(robot,1), value(at,(5,4))).
-init(object(robot,1), value(max_energy,0)).
-init(object(robot,1), value(energy,0)).
+%init(object(robot,1), value(max_energy,0)).
+%init(object(robot,1), value(energy,0)).
 init(object(robot,2), value(at,(3,2))).
-init(object(robot,2), value(max_energy,0)).
-init(object(robot,2), value(energy,0)).
+%init(object(robot,2), value(max_energy,0)).
+%init(object(robot,2), value(energy,0)).
 init(object(robot,3), value(at,(1,2))).
-init(object(robot,3), value(max_energy,0)).
-init(object(robot,3), value(energy,0)).
+%init(object(robot,3), value(max_energy,0)).
+%init(object(robot,3), value(energy,0)).
 init(object(robot,4), value(at,(2,2))).
-init(object(robot,4), value(max_energy,0)).
-init(object(robot,4), value(energy,0)).
+%init(object(robot,4), value(max_energy,0)).
+%init(object(robot,4), value(energy,0)).
 init(object(shelf,1), value(at,(5,1))).
 init(object(product,1),value(on,(1,1))).
 init(object(shelf,2), value(at,(6,2))).

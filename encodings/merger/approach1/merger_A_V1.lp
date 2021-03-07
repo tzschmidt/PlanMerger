@@ -134,7 +134,7 @@ carry(R,T1,T2,S) :- newpickup(R,T1,S,N), newputdown(R,T2,N), robot(R), N!=0.
 % transform new positions into output
 occurs(object(robot,R),action(move,(DX,DY)),T) :- time(T), newpos(R,(X1,Y1),T), newpos(R,(X2,Y2),T-1), DX=X1-X2, DY=Y1-Y2, 1{X1!=X2; Y1!=Y2}1.
 
-%############ A-DOMAIN ####################
+% adjust a-domain specific actions
 occurs(object(robot,R),action(pickup,()),T) :- newpickup(R,T,S,N).
 occurs(object(robot,R),action(putdown,()),T) :- newputdown(R,T,N).
 occurs(object(robot,R),action(deliver,D),T+W1+W2) :- time(T), deliver(R,T,D,N), wait(R,T,W1), dodget(R,T,W2), N>0.

@@ -1,9 +1,7 @@
-% moved to benchmarks
-%#const horizon=10.
 time(1..horizon).
 nulltime(0..horizon).
 
-% directions 
+% directions for robot dodges
 dir(1,0). dir(-1,0). dir(0,1). dir(0,-1).
 
 robot(R) :- init(object(robot,R),value(at,(X,Y))).
@@ -15,6 +13,7 @@ position(R,(X,Y),0) :- init(object(robot,R),value(at,(X,Y))).
 position(R,(X+DX,Y+DY),T+1) :- occurs1(object(robot,R),action(move,(DX,DY)),T+1), position(R,(X,Y),T).
 position(R,(X,Y),T2) :- position(R,(X,Y),T1), T2=T1+1, T2<=horizon, T1>=horizon-L, tlimit(R,L).
 
+%############# MOVE GENERATOR #############
 % determine availible time
 tlimit(R,L) :- L = horizon - N,  N == #sum{1,T:occurs1(_,_,T)}, robot(R). 
 
@@ -22,7 +21,7 @@ tlimit(R,L) :- L = horizon - N,  N == #sum{1,T:occurs1(_,_,T)}, robot(R).
 count(R,0..L) :- tlimit(R,L).
 1{wait(R,T,N) : count(R,N)}1 :- robot(R), nulltime(T). 
 
-% generate dodge times/delay
+% generate time delay for dodge moves
 dcount(R,0) :- robot(R).
 dcount(R,N) :- tlimit(R,L), dcount(R,N-2), N<=L.
 dodget(R,0,0) :- robot(R).
@@ -69,7 +68,10 @@ newpos(R,(X,Y),T) :- newpos(R,(X,Y),T-1), not newpos(R,(X+1,Y),T), not newpos(R,
 % transform new positions into output
 occurs(object(robot,R),action(move,(DX,DY)),T) :- time(T), newpos(R,(X1,Y1),T), newpos(R,(X2,Y2),T-1), DX=X1-X2, DY=Y1-Y2, 1{X1!=X2; Y1!=Y2}1.
 
+% show merged plan
+#show occurs/3.
 
+% used for debugging
 %#show check/1.
 %#show tlimit/2.
 %#show collision/3.
@@ -80,4 +82,3 @@ occurs(object(robot,R),action(move,(DX,DY)),T) :- time(T), newpos(R,(X1,Y1),T), 
 %#show dodgem/3.
 %#show newpos/3.
 %#show position/3.
-#show occurs/3.

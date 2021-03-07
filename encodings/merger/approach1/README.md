@@ -26,6 +26,6 @@ benchmark.lp files in this directory are only for testing and will be removed la
 **A-Domain**
 - **Version 1**
     + A-domain: merger can merge M- and A-domain plans
-    + multiple robots are not allowed to access the same shelf in their original plans
+    + multiple robots are allowed to access the same shelf in their original plans
     + benchmarks must contain "adomain." 
 

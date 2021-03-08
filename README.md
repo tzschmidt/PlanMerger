@@ -26,4 +26,3 @@ Further implementations will be done with Python or Anser Set Programming, speci
 - Tom Schmidt tom.schmidt@uni-potsdam.de
 - Hannes Weichelt hannes.weichelt@uni-potsdam.de
 - Julian Bruns julian.bruns@uni-potsdam.de
-

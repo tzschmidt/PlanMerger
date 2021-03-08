@@ -26,7 +26,7 @@ Merger encodings do not include benchmarks and should be run with a fitting benc
 **A-Domain**
 - **Version 1**
     + A-domain: merger can merge M- and A-domain plans
-    + multiple robots are not allowed to access the same shelf in their original plans
+    + multiple robots are allowed to access the same shelf in their original plans
     + benchmarks must contain "adomain." 
 
 

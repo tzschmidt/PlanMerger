@@ -49,7 +49,6 @@ init(object(order,1),value(line,(1,1))).
 init(object(order,3),value(pickingStation,1)).
 init(object(order,3),value(line,(2,1))).
 
-#const horizon=10.
 time(1..horizon).
 
 % get roboter positions

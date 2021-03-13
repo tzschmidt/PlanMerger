@@ -19,15 +19,6 @@ position(R,(X,Y),0,0) :- init(object(robot,R),value(at,(X,Y))).
 position(R,(X+DX,Y+DY),T,0) :- occurs1(object(robot,R),action(move,(DX,DY)),T), position(R,(X,Y),T-1,0).
 
 
-% The following two blocks of code have no purpuse 
-% (the wait statements normaly have 3 attributes not 4 so this code is meaningless)
-% removeing this code however, for what ever reason, significantly slows the programm down
-% Our guess is that the programm slightly changes the sequence of operations because of this code
-% So this code hase only an indirect influence to the code
-% (A simmilar problem occures at the end of the code)
-wait(R,(X,Y),T+1,0):-position(R,(X,Y),T,0),{position(R,(X2,Y2),T+1,0)}=0,T>=0,T<10.
-wait(R,(X,Y),T+1,0):-wait(R,(X,Y),T,0),{position(R,(X2,Y2),T+1,0)}=0,T>=0,T<10.
-
 %--------------------------------------------
 % Our porgramm creates a variable amount of wait statements depending on how manny robots collide
 {wait(R1,T,C1);wait(R2,T,C2)}<=1:-
@@ -114,5 +105,3 @@ position(R,(X+J,Y+I),T,CONFLICT_DEPTH+1):- position(R,(X,Y),T-1,CONFLICT_DEPTH),
 position(R,(X,Y),T+1,CONFLICT_DEPTH+1) :- position(R,(X,Y),T-1,CONFLICT_DEPTH), edge(R,(I,J),T2,CONFLICT_DEPTH), T=T2.
 %path after the edge conflict
 position(R,(X,Y),T+2,CONFLICT_DEPTH+1) :- position(R,(X,Y),T,CONFLICT_DEPTH), edge(R,(I,J),T2,CONFLICT_DEPTH), T>=T2.
-
-

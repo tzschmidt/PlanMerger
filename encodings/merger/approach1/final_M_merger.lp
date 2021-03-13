@@ -1,3 +1,9 @@
+%############# Authors #############
+% Tom Schmidt
+% Hannes Weichelt
+% Julian Bruns
+
+%############# SETUP #############
 time(1..horizon).
 nulltime(0..horizon).
 
@@ -7,7 +13,6 @@ dir(1,0). dir(-1,0). dir(0,1). dir(0,-1).
 robot(R) :- init(object(robot,R),value(at,(X,Y))).
 node(X,Y) :- init(object(node,N),value(at,(X,Y))).
 
-%############# SETUP #############
 % get robot positions
 position(R,(X,Y),0) :- init(object(robot,R),value(at,(X,Y))).
 position(R,(X+DX,Y+DY),T+1) :- occurs1(object(robot,R),action(move,(DX,DY)),T+1), position(R,(X,Y),T).

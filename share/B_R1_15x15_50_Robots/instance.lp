@@ -325,4 +325,4 @@ init(object(node,222),value(at,(15,12))).
 init(object(node,223),value(at,(15,13))).
 init(object(node,224),value(at,(15,14))).
 init(object(node,225),value(at,(15,15))).
-#const horizon=29.
+#const horizon=40.

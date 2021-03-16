@@ -1,4 +1,4 @@
-# Approach 1
+# Approach 2
 
 Merger encodings do not include benchmarks and should be run with a fitting benchmark and horizon. Expects input plans in the form of `occurs1(...)`. Identical Versions with different instances are noted with \_N. Parameter `#const horizon=10`. needs to be set in the benchmarks or be taken into account in the command.
 `benchmark.lp` files in this directory are only for testing and will be removed later. For finished benchmarks check `/instances/benchmarks/`

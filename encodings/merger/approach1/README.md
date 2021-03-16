@@ -1,4 +1,4 @@
-# Approach 2
+# Approach 1
 
 Currently (version 2) merger encodings include all needed instances and should be run alone. Identical Versions with different instances are noted with \_N.
 

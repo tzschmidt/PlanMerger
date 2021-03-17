@@ -65,7 +65,6 @@ newpos(R,(X,Y),T) :- newpos(R,(X,Y),T-1), not newpos(R,(X+1,Y),T), not newpos(R,
 %############ ADDITIONAL FEATURES ######### 
 % possible improvement: move before generation 
 % locked robots can't change plan -> benchmark contains lock(object(robot,R)).
-%:- wait(R,T,N1), dodge_t(R,T,N2), nulltime(T), lock(object(robot,R)), 1{N1=0; N2=0}1.
 %:- wait(R,horizon,N1), lock(object(robot,R)), robot(R), N1!=0.
 %:- dodge_t(R,horizon,N2), lock(object(robot,R)), robot(R), N2!=0.
 

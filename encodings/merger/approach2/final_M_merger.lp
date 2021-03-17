@@ -20,7 +20,7 @@ position(R,(X,Y),T2) :- position(R,(X,Y),T1), T2=T1+1, T2<=horizon, T1>=horizon-
 
 %############# MOVE GENERATOR #############
 % determine available time
-tlimit(R,L) :- L = horizon - N,  N == #sum{1,T:occurs1(_,_,T)}, robot(R). 
+tlimit(R,L) :- L = horizon - N,  N == #sum{1,T:occurs1(object(robot,R),_,T)}, robot(R). 
 
 % generate wait times
 count(R,0..L) :- tlimit(R,L).

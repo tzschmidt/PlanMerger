@@ -20,7 +20,7 @@ position(R,(X,Y),T2) :- position(R,(X,Y),T1), T2=T1+1, T2<=horizon, T1>=horizon-
 
 %############# MOVE GENERATOR #############
 % determine available time
-tlimit(R,L) :- L = horizon - N,  N == #sum{1,T:occurs1(_,_,T)}, robot(R). 
+tlimit(R,L) :- L = horizon - N,  N == #sum{1,T:occurs1(object(robot,R),_,T)}, robot(R). 
 
 % generate wait times
 count(R,0..L) :- tlimit(R,L).
@@ -73,11 +73,11 @@ newpos(R,(X,Y),T) :- newpos(R,(X,Y),T-1), not newpos(R,(X+1,Y),T), not newpos(R,
 occurs(object(robot,R),action(move,(DX,DY)),T) :- time(T), newpos(R,(X1,Y1),T), newpos(R,(X2,Y2),T-1), DX=X1-X2, DY=Y1-Y2, 1{X1!=X2; Y1!=Y2}1.
 
 % show merged plan
-#show occurs/3.
+%#show occurs/3.
 
 % used for debugging
 %#show check/1.
-%#show tlimit/2.
+#show tlimit/2.
 %#show collision/3.
 %#show wait/3.
 %#show count/2.

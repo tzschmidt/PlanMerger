@@ -73,11 +73,11 @@ newpos(R,(X,Y),T) :- newpos(R,(X,Y),T-1), not newpos(R,(X+1,Y),T), not newpos(R,
 occurs(object(robot,R),action(move,(DX,DY)),T) :- time(T), newpos(R,(X1,Y1),T), newpos(R,(X2,Y2),T-1), DX=X1-X2, DY=Y1-Y2, 1{X1!=X2; Y1!=Y2}1.
 
 % show merged plan
-%#show occurs/3.
+#show occurs/3.
 
 % used for debugging
 %#show check/1.
-#show tlimit/2.
+%#show tlimit/2.
 %#show collision/3.
 %#show wait/3.
 %#show count/2.

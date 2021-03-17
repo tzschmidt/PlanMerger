@@ -75,31 +75,31 @@ count(R,0..L) :- tlimit(R,L).
 % generate time delay for dodge moves
 dcount(R,0) :- robot(R).
 dcount(R,N) :- tlimit(R,L), dcount(R,N-2), N<=L.
-dodget(R,0,0) :- robot(R).
-1{dodget(R,T,N) : dcount(R,N)}1 :- robot(R), time(T).
+dodge_t(R,0,0) :- robot(R).
+1{dodge_t(R,T,N) : dcount(R,N)}1 :- robot(R), time(T).
 
 % remove invalid order
 :- wait(R,T1,N1), wait(R,T2,N2), T1<T2, N1>N2.
-:- dodget(R,T1,N1), dodget(R,T2,N2), T1<T2, N1>N2.
+:- dodge_t(R,T1,N1), dodge_t(R,T2,N2), T1<T2, N1>N2.
 
-% rise in dodget means a dodge happened -> generate dodge move before dodge delay
-1{dodgem(R,T,(DX,DY)) : dir(DX,DY)}1 :- dodget(R,T,N1), dodget(R,T+1,N2), N1<N2, nulltime(T), robot(R).
-dodgem(R,T,(0,0)) :- dodget(R,T,N1), dodget(R,T+1,N2), N1>=N2, nulltime(T), robot(R).
+% rise in dodge_t means a dodge happened -> generate dodge move before dodge delay
+1{dodge_m(R,T,(DX,DY)) : dir(DX,DY)}1 :- dodge_t(R,T,N1), dodge_t(R,T+1,N2), N1<N2, nulltime(T), robot(R).
+dodge_m(R,T,(0,0)) :- dodge_t(R,T,N1), dodge_t(R,T+1,N2), N1>=N2, nulltime(T), robot(R).
 
 % get new positions
 newpos(R,(X,Y),0) :- robot(R), position(R,(X,Y),0).
-newpos(R,(X,Y),T+W1+W2) :- robot(R), position(R,(X,Y),T), nulltime(T), wait(R,T,W1), dodget(R,T,W2).
+newpos(R,(X,Y),T+W1+W2) :- robot(R), position(R,(X,Y),T), nulltime(T), wait(R,T,W1), dodge_t(R,T,W2).
 
 % add new dodge positions
-newpos(R,(X+DX,Y+DY),T+W1+W2+1) :- robot(R), position(R,(X,Y),T), nulltime(T), wait(R,T,W1), dodget(R,T,W2), dodgem(R,T,(DX,DY)), 1{DX!=0; DY!=0}1.
-newpos(R,(X,Y),T+W1+W2+2) :- robot(R), position(R,(X,Y),T), nulltime(T), wait(R,T,W1), dodget(R,T,W2), dodgem(R,T,(DX,DY)), 1{DX!=0; DY!=0}1.
+newpos(R,(X+DX,Y+DY),T+W1+W2+1) :- robot(R), position(R,(X,Y),T), nulltime(T), wait(R,T,W1), dodge_t(R,T,W2), dodge_m(R,T,(DX,DY)), 1{DX!=0; DY!=0}1.
+newpos(R,(X,Y),T+W1+W2+2) :- robot(R), position(R,(X,Y),T), nulltime(T), wait(R,T,W1), dodge_t(R,T,W2), dodge_m(R,T,(DX,DY)), 1{DX!=0; DY!=0}1.
 
 % fill posistions
 newpos(R,(X,Y),T) :- newpos(R,(X,Y),T-1), not newpos(R,(X+1,Y),T), not newpos(R,(X-1,Y),T), not newpos(R,(X,Y+1),T), not newpos(R,(X,Y-1),T), robot(R), nulltime(T).
 
 % determine when shelves are carried
-newpickup(R,T+W1+W2,S,N) :- time(T), pickup(R,T,S,N), wait(R,T,W1), dodget(R,T,W2), N>0.
-newputdown(R,T+W1+W2,N) :- time(T), putdown(R,T,N), wait(R,T,W1), dodget(R,T,W2), N>0.
+newpickup(R,T+W1+W2,S,N) :- time(T), pickup(R,T,S,N), wait(R,T,W1), dodge_t(R,T,W2), N>0.
+newputdown(R,T+W1+W2,N) :- time(T), putdown(R,T,N), wait(R,T,W1), dodge_t(R,T,W2), N>0.
 carry(R,T1,T2,S) :- newpickup(R,T1,S,N), newputdown(R,T2,N), robot(R), N!=0. 
 % possible improvement: determine position of shelves at all times
 %shelf(S,C,T) :- shelf(S,C,T-1), newpickup(R,T1,S,N+1), newputdown(R,T2,S,N), T2<=T, T<T1.
@@ -116,7 +116,7 @@ carry(R,T1,T2,S) :- newpickup(R,T1,S,N), newputdown(R,T2,N), robot(R), N!=0.
 :- newpos(R,(X1,Y1),horizon), robot(R), position(R,(X2,Y2),horizon), X1!=X2, not adomain.
 :- newpos(R,(X1,Y1),horizon), robot(R), position(R,(X2,Y2),horizon), Y1!=Y2, not adomain.
 % A domain stop (anywhere) after last putdown, but not under shelf
-:- T1=T+W1+W2, time(T), putdown(R,T,N), wait(R,T,W1), dodget(R,T,W2), not putdown(R,_,N+1), T1>horizon, adomain.
+:- T1=T+W1+W2, time(T), putdown(R,T,N), wait(R,T,W1), dodge_t(R,T,W2), not putdown(R,_,N+1), T1>horizon, adomain.
 :- newpos(R,C,horizon), robot(R), shelf(_,C,0), adomain.
 
 % A domain specific shelf constraints
@@ -132,7 +132,7 @@ carry(R,T1,T2,S) :- newpickup(R,T1,S,N), newputdown(R,T2,N), robot(R), N!=0.
 % possible improvement: move before generation 
 % locked robots can't change plan -> benchmark contains lock(object(robot,R)).
 :- wait(R,horizon,N1), lock(object(robot,R)), robot(R), N1!=0.
-:- dodget(R,horizon,N2), lock(object(robot,R)), robot(R), N2!=0.
+:- dodge_t(R,horizon,N2), lock(object(robot,R)), robot(R), N2!=0.
 
 
 %############ OUTPUT ###################### 
@@ -142,7 +142,7 @@ occurs(object(robot,R),action(move,(DX,DY)),T) :- time(T), newpos(R,(X1,Y1),T), 
 % adjust a-domain specific actions
 occurs(object(robot,R),action(pickup,()),T) :- newpickup(R,T,S,N).
 occurs(object(robot,R),action(putdown,()),T) :- newputdown(R,T,N).
-occurs(object(robot,R),action(deliver,D),T+W1+W2) :- time(T), deliver(R,T,D,N), wait(R,T,W1), dodget(R,T,W2), N>0.
+occurs(object(robot,R),action(deliver,D),T+W1+W2) :- time(T), deliver(R,T,D,N), wait(R,T,W1), dodge_t(R,T,W2), N>0.
 
 % show merged plan
 #show occurs/3.
@@ -153,9 +153,9 @@ occurs(object(robot,R),action(deliver,D),T+W1+W2) :- time(T), deliver(R,T,D,N), 
 %#show collision/3.
 %#show wait/3.
 %#show count/2.
-%#show dodget/3.
+%#show dodge_t/3.
 %#show dcount/2.
-%#show dodgem/3.
+%#show dodge_m/3.
 %#show newpos/3.
 %#show prepos/3.
 %#show position/3.

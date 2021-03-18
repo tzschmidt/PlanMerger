@@ -1,3 +1,5 @@
+% By Group : TS, JB, HW
+
 init(object(robot,1),value(at,(39,29))).
 init(object(robot,2),value(at,(21,39))).
 init(object(robot,3),value(at,(11,11))).

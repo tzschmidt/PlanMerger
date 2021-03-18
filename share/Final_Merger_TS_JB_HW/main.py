@@ -14,7 +14,7 @@ __status__ = "Development"
 
 # cannot be 'occurs'
 original_occurs_format = 'occurs1'
-merger_file_name = 'final_M_merger.lp'
+merger_file_name = 'final_M_merger_fixed.lp'
 
 
 def get_input_param_files():

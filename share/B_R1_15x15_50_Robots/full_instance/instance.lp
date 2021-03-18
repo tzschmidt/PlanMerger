@@ -1,5 +1,3 @@
-% By Group : TS, JB, HW
-
 init(object(robot,1),value(at,(8,14))).
 init(object(robot,2),value(at,(8,10))).
 init(object(robot,3),value(at,(3,3))).
@@ -325,4 +323,4 @@ init(object(node,222),value(at,(15,12))).
 init(object(node,223),value(at,(15,13))).
 init(object(node,224),value(at,(15,14))).
 init(object(node,225),value(at,(15,15))).
-#const horizon=40.
+#const horizon=29.

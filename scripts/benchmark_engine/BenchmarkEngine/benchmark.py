@@ -6,6 +6,9 @@ import numpy as np
 import os
 import webbrowser
 import time
+import multiprocessing
+import copy
+from Merger.merger import PyMerger
 from abc import ABC
 
 __author__ = "Hannes Weichelt"
@@ -65,7 +68,11 @@ class Benchmark:
         inits = Benchmark.split_statements(instance)['init']
         robot_movements = []
         for i, plan in enumerate(plans):
-            robot_movements += Benchmark.split_statements(plan)['occurs1']
+            if 'occurs1' in Benchmark.split_statements(plan):
+                robot_movements += Benchmark.split_statements(plan)['occurs1']
+            else:
+                print(plan)
+                raise ValueError("NO 'occurs1' statements found in plan!")
         return inits, robot_movements
 
     @staticmethod
@@ -74,14 +81,24 @@ class Benchmark:
             if os.path.isdir(path + "/full_instance") and os.path.isdir(path + "/plans"):
                 first_lp_instance = list(filter(lambda x: x.endswith('.lp'), os.listdir(path + '/full_instance')))[0]
                 f = open(f"{path}/full_instance/{first_lp_instance}", "r")
-                instance = f.read()
+                instance_str = f.read()
                 f.close()
+
+                # format the instance string so that all inits have not empty spaces
+                line_list = []
+                for line in instance_str.split('\n'):
+                    if line.startswith('init('):
+                        line_list.append(line.replace(' ', ''))
+                    else:
+                        line_list.append(line)
+                instance = '\n'.join(line_list)
 
                 plans = []
                 for plan in os.listdir(path + "/plans"):
                     if plan.split('.')[-1] == 'lp':
                         f = open(f"{path}/plans/{plan}", "r")
-                        plans.append(f.read().replace('\n', ' '))
+                        # TODO : replacing all spaces and then replacing all newlines with spaces
+                        plans.append(f.read().replace(' ', '').replace('\n', ' '))
                         f.close()
 
                 return instance, plans
@@ -194,7 +211,7 @@ class Benchmark:
     def check_solution(self, plans):
         position_data = []
         max_t = - np.inf
-        for plan in list(zip(plans.keys(), plans.values())):
+        for plan in sorted(list(zip(plans.keys(), plans.values())), key=lambda x: x[0]):
             time, pos = self.calculate_plan_positions(plan[1], plan[0])
             position_data.append(pos)
             if max(time) > max_t:
@@ -204,9 +221,22 @@ class Benchmark:
         vertex_conflicts = self.get_vertex_conflicts(position_data)
         edge_conflicts = self.get_edge_conflicts(position_data)
         invalid_movements = self.get_invalid_movements(position_data)
+        final_pos_reached = self.check_if_final_position_is_reached(position_data)
 
         conflicts = {'vertex_conflicts': vertex_conflicts, 'edge_conflicts': edge_conflicts}
-        return not vertex_conflicts and not edge_conflicts, conflicts, invalid_movements, max_t
+        return not vertex_conflicts and not edge_conflicts, conflicts, invalid_movements, max_t, final_pos_reached
+
+    def check_if_final_position_is_reached(self, position_data):
+        last_pos = [plan[-1] for plan in position_data]
+        goal_pos = []
+        for plan in sorted(list(zip(self.original_plans.keys(), self.original_plans.values())), key=lambda x: x[0]):
+            _, pos = self.calculate_plan_positions(plan[1], plan[0])
+            goal_pos.append(np.array(pos[-1]))
+        shelve_reached = []
+        for comp in list(zip(last_pos, goal_pos)):
+            shelve_reached.append((comp[0] == comp[1]).all())
+
+        return shelve_reached
 
     def get_invalid_movements(self, position_data):
         invalid_movements = []
@@ -276,7 +306,7 @@ class Benchmark:
                 print(f'occurs1(object(robot,{plan[0]}),action(move,({move[1][0]},{move[1][1]})),{move[0]}).')
 
     def plot(self, plans=None, original_plans=True, scale_factor=1, show_text=True, edge_conflicts=None,
-             vertex_conflicts=None, save_path=None):
+             vertex_conflicts=None, final_pos_reached=None, save_path=None):
         np_nodes = np.array(self.nodes)
         max_x = np_nodes[:, 0].max()
         max_y = np_nodes[:, 1].max()
@@ -336,6 +366,13 @@ class Benchmark:
                 ax.scatter(conflict[1][0] - 0.5, conflict[1][1] - 0.5, s=(10 ** 3) * scale_factor, c='red',
                            marker='$[VC]$', alpha=0.75)
 
+        if final_pos_reached:
+            for i, reached in enumerate(final_pos_reached):
+                shelf = self.shelves[i+1]
+                shelf = plt.Rectangle((shelf[0] - 1, shelf[1] - 1), 1, 1, ec=['#F44336', '#7CB342'][reached],
+                                       fc='none', linewidth=10 * scale_factor, alpha=0.75)
+                ax.add_patch(shelf)
+
         if save_path:
             print(f'saving plot at {save_path}')
             plt.savefig(save_path)
@@ -345,7 +382,7 @@ class Benchmark:
 
 class RandomBenchmark(Benchmark):
     def __init__(self, size_x, size_y, n_robots, time_horizon=10, verbose=0, random_seed=None):
-        path = 'RANDOM BENCHMARK'
+        path = f'RANDOM BENCHMARK {size_x}X-{size_y}Y-{n_robots}R'
         self.path = path
         self.name = path.split('/')[-1]
         # inits, robot_movements, instance = self.read_benchmark_files(path)
@@ -475,11 +512,24 @@ class BenchmarkBinder:
     def __init__(self):
         self.benchmarks = []
 
+        manager = multiprocessing.Manager()
+        self.shared_solvable = manager.Value('b', False)
+        self.shared_solving_time = manager.Value('d', 0.0)
+        self.shared_plan = manager.Value('s', "")
+
     def add_benchmark(self, benchmark):
         self.benchmarks.append(benchmark)
 
     def add_benchmark_from_path(self, path):
         self.benchmarks.append(Benchmark(path))
+
+    def add_all_benchmarks_in_dir(self, path):
+        if os.path.isdir(path):
+            for file in sorted(os.listdir(path)):
+                if os.path.isdir(f"{path}/{file}") and not file.startswith('%'):
+                    if os.path.exists(f"{path}/{file}/full_instance") and os.path.exists(f"{path}/{file}/plans"):
+                        print(f"Benchmark added : {file}")
+                        self.add_benchmark_from_path(f"{path}/{file}")
 
     def remove_benchmark(self, index):
         if 0 <= index < len(self.benchmarks):
@@ -488,10 +538,44 @@ class BenchmarkBinder:
     def get_benchmarks(self):
         return self.benchmarks
 
-    def evaluate(self, merger_path, verbose=0):
-        # TODO : implement the plan generation here also with time tracking for the calculation time and remove the
-        #        actually unnecessary plans parameter
-        if os.path.isfile(merger_path) and merger_path.endswith('.lp') and self.benchmarks:
+    def __str__(self):
+        res = '[\n'
+        for b in self.benchmarks:
+            res += b.name + '\n'
+        return res + ']'
+
+    def solve_with_merger(self, benchmark, merger_path, use_python_merger):
+        if merger_path:
+            print('start solving')
+            plan, solving_time, solvable = ClingoSolver.solve(merger_path, benchmark)
+            print('finished solving')
+        elif use_python_merger:
+            full_benchmark_str = ClingoSolver.get_full_benchmark_string(benchmark)
+            plan, solving_time, solvable = PyMerger.merge(full_benchmark_str)  # using the complete time
+        else:
+            raise ValueError("this function has to either get a '.lp' merger path or has to be run with the internal"
+                             "python merger")
+
+        self.shared_solvable.value = solvable
+        self.shared_solving_time.value = solving_time
+        self.shared_plan.value = plan
+
+    def evaluate(self, merger_path=None, verbose=1, use_python_merger=False, max_solving_time=60, output_text_file=False,
+                 output_file_name=None):
+        if output_text_file or output_file_name:
+            if verbose != 1:
+                raise ValueError("Text output only works in verbose=1 mode!")
+            if not (output_text_file and output_file_name):
+                raise ValueError("To output to a textfile please also choose an output_file_name")
+            if '\\' in output_file_name or '/' in output_file_name or '.' in output_file_name:
+                raise ValueError("Invalid output_file_name format (no / or \\ or .)")
+        if max_solving_time < 0:
+            raise ValueError("max_solving_time is the upper threshold for solving the benchmarks. Its value has to be"
+                             "greater than zero")
+        if merger_path and use_python_merger:
+            raise ValueError("It is only possible to use either a normal .lp merger or a python merger.")
+        verbose_plotting_depth = 2
+        if (use_python_merger or (os.path.isfile(merger_path) and merger_path.endswith('.lp'))) and self.benchmarks:
             # Remove all of the old plot images in the output/imgs folder
             image_list = [f for f in os.listdir('output/imgs') if f.endswith(".png")]
             for f in image_list:
@@ -504,61 +588,104 @@ class BenchmarkBinder:
             invalid_movement_list = []
             in_horizon_list = []
             solving_times = []
-            plans = []
+            final_pos_reached_list = []
+            solvable_list = []
+
             for i, benchmark in enumerate(self.benchmarks):
                 print(benchmark.name)
 
                 # All the Benchmarks in the binder are solved with clingo and the 'occurs' output is returned
-                try:
-                    print('start solving')
-                    plan, solving_time = ClingoSolver.solve(merger_path, benchmark)
-                    print('finished solving')
+                # If the Benchmark is solvable the checkers outputs are appended to the output lists, if not some
+                # standard values are appended instead
+
+                # MULTIPROCESSING PART : Still under construction (may contain some errors)
+                # TODO : finish multiprocessing part + check for errors
+                process = multiprocessing.Process(target=self.solve_with_merger, args=(benchmark, merger_path, use_python_merger))
+                process.start()
+                process.join(max_solving_time)
+                timeout = False
+
+                # If thread is active
+                if process.is_alive():
+                    print("!!! - Time Limit exceeded for merging : ABORT")
+                    timeout = True
+                    # Terminate
+                    process.terminate()
+                    process.join()
+
+                if timeout:
+                    plan = []
+                    solving_time = 'TIMEOUT'
+                    solvable = False
+                else:
+                    solvable = self.shared_solvable.value
+                    solving_time = self.shared_solving_time.value
+                    plan = self.shared_plan.value
+
+                # END OF MULTIPROCESSING PART
+
+                solvable_list.append(solvable)
+                solving_times.append(solving_time)
+                name_list.append(benchmark.name)
+                path_list.append(benchmark.path)
+
+                image_path = f"output/imgs/b_{i}.png"
+
+                if solvable:
                     plan_formatted = '.\n'.join(plan.split()) + "."
                     plan_movements = Benchmark.read_movements_from_string(plan_formatted)
+
+                    _, conflicts, invalid_movements, max_t, final_pos_reached = benchmark.check_solution(plan_movements)
+
+                    conflict_list.append(conflicts)
+                    invalid_movement_list.append(invalid_movements)
+                    in_horizon_list.append(max_t <= benchmark.horizon)
+                    final_pos_reached_list.append(final_pos_reached)
 
                     if verbose:
                         if isinstance(benchmark, RandomBenchmark):
                             print("- INSTANCE [\n" + benchmark.instance + "\n]")
                         print("- FINAL PLANS [\n" + plan_formatted + "\n]")
 
-                    _, conflicts, invalid_movements, max_t = benchmark.check_solution(plan_movements)
-                    solving_times.append(solving_time)
-                    conflict_list.append(conflicts)
-                    name_list.append(benchmark.name)
-                    path_list.append(benchmark.path)
-                    invalid_movement_list.append(invalid_movements)
-                    in_horizon_list.append(max_t <= benchmark.horizon)
+                    if verbose >= verbose_plotting_depth:
+                        benchmark.plot(vertex_conflicts=conflicts['vertex_conflicts'],
+                                       edge_conflicts=conflicts['edge_conflicts'],
+                                       save_path=image_path, plans=plan_movements,
+                                       final_pos_reached=final_pos_reached)
 
-                    image_path = f"output/imgs/b_{i}.png"
-                    benchmark.plot(vertex_conflicts=conflicts['vertex_conflicts'],
-                                   edge_conflicts=conflicts['edge_conflicts'],
-                                   save_path=image_path, plans=plan_movements)
-                    image_paths.append(image_path)
-
-                except InvalidClingoOutputException:
-                    solving_times.append("NOT SOLVABLE OR ERROR OCCURED")
-                    conflicts = {
-                        "vertex_conflicts": [[0, np.array([0, 0])]],
-                        "edge_conflicts": [[0, np.array([0, 0]), np.array([0, 0])]]
-                    }
-                    conflict_list.append(conflicts)
-                    name_list.append(benchmark.name)
-                    path_list.append(benchmark.path)
-                    invalid_movement_list.append([[0, np.array([0,0])]])
+                else:
+                    conflict_list.append({ "vertex_conflicts": [], "edge_conflicts": [] })
+                    invalid_movement_list.append([])
                     in_horizon_list.append(False)
+                    final_pos_reached_list.append([])
 
-                    image_path = f"output/imgs/b_{i}.png"
-                    benchmark.plot(save_path=image_path)
-                    image_paths.append(image_path)
+                    if verbose >= verbose_plotting_depth:
+                        benchmark.plot(save_path=image_path)
 
-            self.output_html(conflict_list, name_list, path_list, image_paths, invalid_movement_list, in_horizon_list,
-                             solving_times)
+                image_paths.append(image_path)
 
-            html_file_path = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/output/out.html'
-            self.open_html_file(html_file_path)
+            # Deciding for the way of output :
+            # verbose = 1 : only textual output
+            # verbose = 2 : an html result sheet as output
+
+            if verbose == 2:
+                print(solvable_list)
+                self.output_html(conflict_list, name_list, path_list, image_paths, invalid_movement_list, in_horizon_list,
+                                 solving_times, final_pos_reached_list, solvable_list)
+
+                html_file_path = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/output/out.html'
+                self.open_html_file(html_file_path)
+            elif verbose == 1:
+                text_out = self.output_text(conflict_list, name_list, path_list, invalid_movement_list, in_horizon_list,
+                                            solving_times, final_pos_reached_list, solvable_list)
+                print(text_out)
+
+                f = open(f"output/{output_file_name}.txt", "a")
+                f.write(text_out)
+                f.close()
+
         else:
-            raise ValueError("The Benchmark Binder is either empty or the length of plans is not equal to the length of"
-                             "the Benchmark Binder")
+            raise ValueError("The Benchmark Binder is either empty or the Merger file path doesn't exist")
 
     @staticmethod
     def open_html_file(path):
@@ -567,8 +694,60 @@ class BenchmarkBinder:
         webbrowser.open(url, new=2)
 
     @staticmethod
-    def output_html(results, names, paths, image_paths, invalid_movements, in_horizon, solving_times):
-        if len(results) == len(names) == len(paths) == len(image_paths) == len(invalid_movements) == len(in_horizon):
+    def output_text(results, names, paths, invalid_movements, in_horizon, solving_times, final_pos_reached_list,
+                    solvable_list):
+        res_str = ""
+        if len(results) == len(names) == len(paths) == len(invalid_movements) == len(in_horizon) == len(solving_times)\
+                == len(solvable_list):
+            lens = [max([len(str(n)) for n in names] + [13]),
+                    16,
+                    8,
+                    max([len(str(t)) for t in solving_times] + [19]),
+                    max([len(str(h)) for h in in_horizon] + [10]),
+                    max([len(str(len(r['vertex_conflicts']))) for r in results] + [16]),
+                    max([len(str(len(r['edge_conflicts']))) for r in results] + [14]),
+                    max([len(str(len(ivm))) for ivm in invalid_movements] + [17]),
+                    max([len(str(len(sr)))*2+1 for sr in final_pos_reached_list] + [15])]
+            head = "| {:" + str(lens[0]) + "s} | {:"\
+                   + str(lens[1]) + "s} | {:"\
+                   + str(lens[2]) + "s} | {:"\
+                   + str(lens[3]) + "s} | {:"\
+                   + str(lens[4]) + "s} | {:"\
+                   + str(lens[5]) + "s} | {:"\
+                   + str(lens[6]) + "s} | {:"\
+                   + str(lens[7]) + "s} | {:"\
+                   + str(lens[8]) + "s} |"
+            res_str += head.format('Instance Name', 'Correct Solution', 'Solvable', 'Solving Time (in s)', 'In Horizon', 'Vertex Conflicts',
+                                   'Edge Conflicts', 'Invalid Movements', 'Shelves Reached') + '\n'
+            res_str += head.format('-'*lens[0], '-'*lens[1], '-'*lens[2], '-'*lens[3], '-'*lens[4], '-'*lens[5],
+                                   '-'*lens[6], '-'*lens[7], '-'*lens[8]) + '\n'
+            s = "| {:" + str(lens[0]) + "s} | {:"\
+                + str(lens[1]) + "s} | {:" \
+                + str(lens[2]) + "s} | {:" \
+                + str(lens[3]) + "s} | {:"\
+                + str(lens[4]) + "s} | {:"\
+                + str(lens[5]) + "d} | {:"\
+                + str(lens[6]) + "d} | {:" \
+                + str(lens[7]) + "d} | {:" \
+                + str(lens[8]) + "s} |"
+            for i in range(len(results)):
+                vcs = results[i]['vertex_conflicts']
+                ecs = results[i]['edge_conflicts']
+                ivm = invalid_movements[i]
+                # print(f"| {names[i]} | {solving_times[i]} | {in_horizon[i]} | {len(vcs)} | {len(ecs)} | {len(ivm)} |")
+                # TODO : schoener machen!
+                correct = solvable_list[i] and in_horizon[i] and len(vcs) == 0 and len(ecs) == 0 and len(ivm) == 0 and sum(final_pos_reached_list[i]) == len(final_pos_reached_list[i])
+                res_str += s.format(names[i], str(correct), str(solvable_list[i]), str(solving_times[i]), str(in_horizon[i]),
+                                    len(vcs), len(ecs), len(ivm),
+                                    f"{sum(final_pos_reached_list[i])}/{len(final_pos_reached_list[i])}") + '\n'
+
+        return res_str
+
+    @staticmethod
+    def output_html(results, names, paths, image_paths, invalid_movements, in_horizon, solving_times,
+                    final_pos_reached_list, solvable_list):
+        if len(results) == len(names) == len(paths) == len(image_paths) == len(invalid_movements) == len(in_horizon)\
+                == len(solving_times) == len(final_pos_reached_list) == len(solvable_list):
             f = open("html/quick.html", "r")
             quick = f.read()
             f.close()
@@ -583,6 +762,8 @@ class BenchmarkBinder:
                 f = open("html/edge_conflict.html", "r")
                 ec_template = f.read()
                 f.close()
+
+                sol = solvable_list[result_index]
 
                 vcs = []
                 for vc in results[result_index]['vertex_conflicts']:
@@ -613,18 +794,28 @@ class BenchmarkBinder:
                 b_template = f.read()
                 f.close()
 
+                passed_out = ['not-passed', 'passed']
+
                 benchmark_out = b_template.replace('{{ VERTEX CONFLICTS }}', '\n'.join(vcs))
                 benchmark_out = benchmark_out.replace('{{ EDGE CONFLICTS }}', '\n'.join(ecs))
                 benchmark_out = benchmark_out.replace('{{ INVALID MOVEMENTS }}', '\n'.join(ims))
                 benchmark_out = benchmark_out.replace('{{ NAME }}', names[result_index])
                 benchmark_out = benchmark_out.replace('{{ PATH }}', paths[result_index])
+                benchmark_out = benchmark_out.replace('{{ SOLVABLE }}', passed_out[sol])
                 benchmark_out = benchmark_out.replace('{{ TIME }}', f"{solving_times[result_index]}s")
-                benchmark_out = benchmark_out.replace('{{ IN HORIZON }}', ['passed', 'not-passed'][int(not in_horizon[result_index])])
-                benchmark_out = benchmark_out.replace('{{ VC PASSED }}', ['passed', 'not-passed'][int(bool(vcs))])
-                benchmark_out = benchmark_out.replace('{{ EC PASSED }}', ['passed', 'not-passed'][int(bool(ecs))])
-                benchmark_out = benchmark_out.replace('{{ IM PASSED }}', ['passed', 'not-passed'][int(bool(ims))])
+                benchmark_out = benchmark_out.replace('{{ IN HORIZON }}', passed_out[in_horizon[result_index]])
+                benchmark_out = benchmark_out.replace('{{ VC PASSED }}', passed_out[not bool(vcs) and sol])
+                benchmark_out = benchmark_out.replace('{{ EC PASSED }}', passed_out[not bool(ecs) and sol])
+                benchmark_out = benchmark_out.replace('{{ IM PASSED }}', passed_out[not bool(ims) and sol])
+                n_robots = len(final_pos_reached_list[result_index])
+                n_reached = sum(final_pos_reached_list[result_index])
+                reached_percentage = round((n_reached / n_robots) * 100) if n_robots else 0
+                benchmark_out = benchmark_out.replace('{{ N ROBOTS }}', str(n_robots))
+                benchmark_out = benchmark_out.replace('{{ N FINAL POSITIONS REACHED }}', str(n_reached))
+                benchmark_out = benchmark_out.replace('{{ REACHED PERCENTAGE }}', str(reached_percentage))
+                benchmark_out = benchmark_out.replace('{{ ALL REACHED }}', passed_out[n_robots == n_reached and sol])
 
-                if not vcs and not ecs and not ims and in_horizon[result_index]:
+                if not vcs and not ecs and not ims and in_horizon[result_index] and n_robots == n_reached and sol:
                     benchmark_out = benchmark_out.replace('{{ PASSED }}', 'passed')
                     quick_list.append(quick_with_id.replace('{{ PASSED }}', 'passed'))
                 else:
@@ -661,23 +852,13 @@ class InvalidClingoOutputException(Exception):
 class ClingoSolver(ABC):
 
     @staticmethod
-    def solve(merger_path, benchmark):
-        f = open(merger_path, "r")
-        merger = f.read()
-        f.close()
-
-        try:
-            instance, plans = Benchmark.import_benchmark(benchmark.path)
-        except ValueError:
-            # TODO: check if benchmark is random benchmark (if and oly if):
-            instance = benchmark.instance
-            plans = benchmark.plans_str_split
+    def solve_with_clingo(full_asp_string, horizon_replacement=None):
+        if horizon_replacement:
+            full_asp_string = ClingoSolver.remove_horizon_lines(full_asp_string)
+            full_asp_string += f'\n#const horizon={horizon_replacement}.'
 
         ctl = clingo.Control()
-
-        full_benchmark_str = instance + "\n".join(plans) + "\n" + merger
-
-        ctl.add("base", [], full_benchmark_str)
+        ctl.add("base", [], full_asp_string)
 
         res = ""
 
@@ -692,7 +873,58 @@ class ClingoSolver(ABC):
                 res = "{}".format(m)
             handle.get()
 
-        if res:
-            return res, end - start
-        else:
-            raise InvalidClingoOutputException
+        return res, end - start, bool(res)
+
+    @staticmethod
+    def get_full_benchmark_string(benchmark):
+        # TODO : Duplicated, delete in solve and replace
+        try:
+            instance, plans = Benchmark.import_benchmark(benchmark.path)
+        except ValueError:
+            # TODO: check if benchmark is random benchmark (if and oly if):
+            if isinstance(benchmark, RandomBenchmark):
+                instance = benchmark.instance
+                plans = benchmark.plans_str_split
+
+        plans_formatted = '\n'.join(['\n'.join(plan.split()) for plan in plans])
+
+        full_benchmark_str = instance + "\n" + plans_formatted + "\n" + f"#const horizon={benchmark.horizon}."
+
+        return full_benchmark_str
+
+    @staticmethod
+    def solve(merger_path, benchmark, horizon_replacement=None):
+        f = open(merger_path, "r")
+        merger = f.read()
+        f.close()
+
+        try:
+            instance, plans = Benchmark.import_benchmark(benchmark.path)
+        except ValueError:
+            # TODO: check if benchmark is random benchmark (if and oly if):
+            if isinstance(benchmark, RandomBenchmark):
+                instance = benchmark.instance
+                plans = benchmark.plans_str_split
+
+        full_benchmark_str = instance + "\n" + "\n".join(plans) + "\n" + "\n" + merger
+
+        return ClingoSolver.solve_with_clingo(full_benchmark_str, horizon_replacement=horizon_replacement)
+
+    @staticmethod
+    def remove_horizon_lines(string):
+        res = []
+        for line in string.split('\n'):
+            if '#const horizon' not in line:
+                res.append(line)
+        return '\n'.join(res)
+
+    @staticmethod
+    def get_smallest_horizon(merger_path, benchmark, range_end, range_start=1, range_step=1):
+        if range_end >= range_start >= 0:
+            for horizon in range(range_start, range_end, range_step):
+                res, solving_time, solvable = ClingoSolver.solve(merger_path, benchmark, horizon_replacement=horizon)
+                if solvable:
+                    return horizon, res, solving_time
+        # return None when in the given range there is no solvable solution
+        return None
+

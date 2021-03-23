@@ -6,8 +6,19 @@
         <h3>Computation Time : <span style="opacity: 0.5">{{ TIME }}</span></h3>
     </div>
     <div class="conflicts">
+        <h3>Solvable :</h3>
+        <div class="indicator {{ SOLVABLE }}"></div>
+    </div>
+    <div class="conflicts">
         <h3>Solution In Time Horizon :</h3>
         <div class="indicator {{ IN HORIZON }}"></div>
+    </div>
+    <div class="conflicts">
+        <h3>Final Positions Reached:</h3>
+        <div class="bar-outer">
+            <div class="bar-inner" style="width: {{ REACHED PERCENTAGE }}%"> <h4>{{ N FINAL POSITIONS REACHED }}<span style="opacity: 0.5">/{{ N ROBOTS }}</span></h4></div>
+        </div>
+        <div class="indicator {{ ALL REACHED }}"></div>
     </div>
     <div class="conflicts">
         <h3>Vertex Conflicts :</h3>

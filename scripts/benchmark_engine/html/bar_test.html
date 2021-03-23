@@ -1,0 +1,31 @@
+<html>
+<head>
+    <style>
+        .bar-outer{
+            width: 20vw;
+            height: 5vw;
+            background-color: #F44336;
+            overflow: hidden;
+        }
+        .bar-inner{
+            height: 5vw;
+            background-color: #7CB342;
+            animation-name: load;
+            animation-duration: 1s;
+        }
+        @keyframes load{
+            0%{
+                margin-left: -20vw;
+            }
+            100%{
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bar-outer">
+        <div class="bar-inner" style="width: 70%"> </div>
+    </div>
+</body>
+</html>
